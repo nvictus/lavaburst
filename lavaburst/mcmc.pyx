@@ -5,7 +5,93 @@ from libc.math cimport log, exp
 
 where = np.flatnonzero
 
-def mcmc(
+
+def metropolis(
+        np.ndarray[np.int_t, ndim=1] initial_state,
+        np.ndarray[np.int_t, ndim=1] positions,
+        np.ndarray[np.double_t, ndim=2] Wseg,
+        double beta, 
+        int num_sweeps):
+
+    cdef int N = initial_state.size
+    cdef int M = positions.size
+    cdef np.ndarray[np.int_t, ndim=2] state = np.zeros((num_sweeps,N), dtype=int)
+    cdef np.ndarray[np.int_t, ndim=2] events = np.zeros((num_sweeps,M), dtype=int)
+    cdef np.ndarray[np.double_t, ndim=2] gains = np.zeros((num_sweeps,M), dtype=float)
+    cdef np.ndarray[np.int_t, ndim=1] random_ints = np.random.random_integers(1,M-1, size=(M,)) 
+    state[0,:] = initial_state
+
+    cdef int s
+    for s in range(1,num_sweeps):
+        metropolis_sweep(s, M, state, events, gains, positions, random_ints, Wseg, beta)
+
+    return state, events, gains
+
+
+@cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef metropolis_sweep(
+        int s,
+        int M,
+        np.ndarray[np.int_t, ndim=2] state,
+        np.ndarray[np.int_t, ndim=2] events,
+        np.ndarray[np.double_t, ndim=2] gains,
+        np.ndarray[np.int_t, ndim=1] positions,
+        np.ndarray[np.int_t, ndim=1] random_ints,
+        np.ndarray[np.double_t, ndim=2] Wseg,
+        double beta):
+
+    cdef int i, j, k, here, left, right
+    cdef double W1, W2, W12
+    cdef double gain, loglik
+    state[s, :] = state[s-1, :]
+    # do a sweep of M iterations
+    for k in range(0, M):
+
+        # pick a random site (never the first)
+        i = random_ints[k]
+        here = positions[i]
+        if i == 1:
+            left = positions[0]
+        else:
+            for j in range(i-1, 0, -1):
+                left = positions[j]
+                if state[s,left] == 1:
+                    break
+        if i == M-1:
+            right = positions[M-1]+1
+        else:
+            for j in range(i+1, len(positions)):
+                right = positions[j]
+                if state[s,right] == 1:
+                    break
+
+        # propose to delete a boundary (i.e. merge two communities)
+        # or create a boundary (i.e. split a community)
+        W1  = Wseg[left, here]
+        W2  = Wseg[here, right]
+        W12 = Wseg[left, right]
+        if state[s,here] == 1: 
+            gain = W12 - W1 - W2
+        else: 
+            gain = W1 + W2 - W12
+
+        # acceptance probability (deltaE = -m*deltaQ, loglik = -beta*deltaE)
+        loglik = beta*gain
+
+        # decide whether to toggle the boundary or not (Metropolis)
+        if gain >= 0 or log(np.random.rand()) < loglik:
+            state[s,here] = 0 if state[s,here] == 1 else 1
+            events[s,k] = i
+            gains[s,k] = gain
+        else:
+            events[s,k] = 0
+            gains[s,k] = 0.0
+
+
+
+def cop(
         np.ndarray[np.double_t, ndim=2] Eseg,
         double beta,
         int q,
@@ -45,7 +131,7 @@ def score_state(Eseg, s):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int find_left(
+cdef inline int find_left(
         int i,
         np.ndarray[np.int_t, ndim=1] state):
     cdef int j, left
@@ -57,7 +143,7 @@ cdef int find_left(
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int find_right(
+cdef inline int find_right(
         int i,
         np.ndarray[np.int_t, ndim=1] state,
         int N):
@@ -143,95 +229,6 @@ cdef sweep_COP(
 
 
 
-
-
-
-
-def potts_metropolis(np.ndarray[np.int_t, ndim=1] initial_state,
-           np.ndarray[np.int_t, ndim=1] positions,
-           np.ndarray[np.double_t, ndim=2] Wins, 
-           np.ndarray[np.double_t, ndim=2] Wtot2, 
-           double m, 
-           double beta, 
-           double gamma,
-           int num_sweeps):
-
-    cdef int N = initial_state.size
-    cdef int M = positions.size
-    cdef np.ndarray[np.int_t, ndim=2] state = np.zeros((num_sweeps,N), dtype=int)
-    cdef np.ndarray[np.int_t, ndim=2] events = np.zeros((num_sweeps,M), dtype=int)
-    cdef np.ndarray[np.double_t, ndim=2] gains = np.zeros((num_sweeps,M), dtype=float)
-    cdef np.ndarray[np.int_t, ndim=1] random_ints = np.random.random_integers(1,M-1, size=(M,)) 
-    state[0,:] = initial_state
-
-    cdef int s
-    for s in range(1,num_sweeps):
-        potts_sweep(s, M, state, events, gains, positions, random_ints, Wins, Wtot2, m, beta, gamma)
-
-    return state, events, gains
-
-@cython.cdivision(True)
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef potts_sweep(int s,
-          int M,
-          np.ndarray[np.int_t, ndim=2] state,
-          np.ndarray[np.int_t, ndim=2] events,
-          np.ndarray[np.double_t, ndim=2] gains,
-          np.ndarray[np.int_t, ndim=1] positions,
-          np.ndarray[np.int_t, ndim=1] random_ints,
-          np.ndarray[np.double_t, ndim=2] Wins,
-          np.ndarray[np.double_t, ndim=2] Wtot2,
-          double m,
-          double beta,
-          double gamma):
-
-    cdef int i, j, k, here, left, right
-    cdef double W1, W2, W12
-    cdef double gain, loglik
-
-    # do a sweep of M iterations
-    for k in range(0, M):
-
-        # pick a random site (never the first)
-        i = random_ints[k]
-        here = positions[i]
-        if i == 1:
-            left = positions[0]
-        else:
-            for j in range(i-1, 0, -1):
-                left = positions[j]
-                if state[s,left] == 1:
-                    break
-        if i == M-1:
-            right = positions[M-1]+1
-        else:
-            for j in range(i+1, len(positions)):
-                right = positions[j]
-                if state[s,right] == 1:
-                    break
-
-        # propose to delete a boundary (i.e. merge two communities)
-        # or create a boundary (i.e. split a community)
-        W1  = Wins[left, here-1] - gamma*Wtot2[left, here-1]
-        W2  = Wins[here, right-1] - gamma*Wtot2[here, right-1]
-        W12 = Wins[left, right-1] - gamma*Wtot2[left, right-1]
-        if state[s,here] == 1: 
-            gain = W12 - W1 - W2
-        else: 
-            gain = W1 + W2 - W12
-
-        # acceptance probability (deltaE = -m*deltaQ, loglik = -beta*deltaE)
-        loglik = beta*m*gain
-
-        # decide whether to toggle the boundary or not (Metropolis)
-        if gain >= 0 or log(np.random.rand()) < loglik:
-            state[s,here] = 0 if state[s,here] == 1 else 1
-            events[s,k] = i
-            gains[s,k] = gain
-        else:
-            events[s,k] = 0
-            gains[s,k] = 0.0
 
 
 

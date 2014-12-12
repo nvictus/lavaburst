@@ -1,1 +1,2 @@
-from .segment import *
+from . import segment
+from . import mcmc
