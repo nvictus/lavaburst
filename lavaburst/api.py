@@ -4,6 +4,39 @@ import functools
 import numpy as np
 
 
+class Segmentation(object):
+    @classmethod
+    def from_state(cls, is_boundary):
+        self._path = where(is_boundary)
+
+    def __init__(self, path):
+        self._path = path
+
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def state(self):
+        N = self._path[-1]
+        s = np.zeros(N+1, dtype=int)
+        s[self._path] = 1
+        return s
+
+    @property
+    def segment_starts(self):
+        return self._path[:-1]
+
+    @property
+    def segment_ends(self):
+        return self._path[1:]
+
+    @property
+    def segment_spans(self):
+        path = self._path
+        return np.c_[path[:-1], path[1:]]
+
+
 def memoize(maxsize=100):
     '''Least-frequenty-used cache decorator.
 
