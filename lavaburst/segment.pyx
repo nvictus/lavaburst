@@ -4,72 +4,72 @@ cimport numpy as np
 from libc.math cimport log, exp
 
 
-@cython.cdivision(True)
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-cpdef sums_by_segment(np.ndarray[np.double_t, ndim=2] A):
-    """
-    S = sums_by_segment(A)
-    Sum the edge weights in every segment of the graph represented by A.
+# @cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.nonecheck(False)
+# cpdef sums_by_segment(np.ndarray[np.double_t, ndim=2] A):
+#     """
+#     S = sums_by_segment(A)
+#     Sum the edge weights in every segment of the graph represented by A.
 
-    Input:
-        A : N x N (double)
-        A symmetric square matrix. A[i,j] is the weight of the edge connecting
-        nodes i and j. If there are nonzero self-weights in the graph, the 
-        values on the diagonal A[i,i] are assumed to be twice the weight.
+#     Input:
+#         A : N x N (double)
+#         A symmetric square matrix. A[i,j] is the weight of the edge connecting
+#         nodes i and j. If there are nonzero self-weights in the graph, the 
+#         values on the diagonal A[i,i] are assumed to be twice the weight.
 
-    Output:
-        S : N+1 x N+1 (double)
-        A symmetric square matrix of summed weights of all contiguous segments 
-        of nodes. S[a,b] is the sum of weights between all pairs of nodes in the 
-        half-open range [a..b-1] (excluding b).
+#     Output:
+#         S : N+1 x N+1 (double)
+#         A symmetric square matrix of summed weights of all contiguous segments 
+#         of nodes. S[a,b] is the sum of weights between all pairs of nodes in the 
+#         half-open range [a..b-1] (excluding b).
 
-    """
-    cdef int N = len(A)
-    cdef np.ndarray[np.double_t, ndim=2] S = np.zeros((N+1,N+1), dtype=float)
+#     """
+#     cdef int N = len(A)
+#     cdef np.ndarray[np.double_t, ndim=2] S = np.zeros((N+1,N+1), dtype=float)
 
-    cdef int i
-    for i in range(N):
-        S[i,i+1] = S[i+1,i] = A[i,i]/2.0
+#     cdef int i
+#     for i in range(N):
+#         S[i,i+1] = S[i+1,i] = A[i,i]/2.0
 
-    cdef int start, end
-    cdef np.ndarray[np.double_t, ndim=1] cumsum
-    for end in range(1, N):
-        cumsum = np.zeros(end+1, dtype=float)
-        cumsum[end] = A[end,end]
+#     cdef int start, end
+#     cdef np.ndarray[np.double_t, ndim=1] cumsum
+#     for end in range(1, N):
+#         cumsum = np.zeros(end+1, dtype=float)
+#         cumsum[end] = A[end,end]
 
-        for start in range(end-1, -1, -1):
-            cumsum[start] = cumsum[start+1] + A[start,end]
-            S[start,end+1] = S[end+1,start] = S[start, end] + cumsum[start]
+#         for start in range(end-1, -1, -1):
+#             cumsum[start] = cumsum[start+1] + A[start,end]
+#             S[start,end+1] = S[end+1,start] = S[start, end] + cumsum[start]
 
-    return S
+#     return S
 
 
-@cython.cdivision(True)
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.nonecheck(False)
-cpdef normalized_sums_by_segment(np.ndarray[np.double_t, ndim=2] A):
-    """
-    S = normalized_sums_by_segment(A)
-    Aggregate the edge weights of every segment of the graph represented by A 
-    and normalize by the total weight of the graph. If there are nonzero 
-    self-weights in the graph, the values on the diagonal A[i,i] are assumed to 
-    be twice the edge weight.
+# @cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.nonecheck(False)
+# cpdef normalized_sums_by_segment(np.ndarray[np.double_t, ndim=2] A):
+#     """
+#     S = normalized_sums_by_segment(A)
+#     Aggregate the edge weights of every segment of the graph represented by A 
+#     and normalize by the total weight of the graph. If there are nonzero 
+#     self-weights in the graph, the values on the diagonal A[i,i] are assumed to 
+#     be twice the edge weight.
 
-    Input:
-        A : N x N (double)
+#     Input:
+#         A : N x N (double)
 
-    Output:
-        S : N+1 x N+1 (double)
+#     Output:
+#         S : N+1 x N+1 (double)
 
-    """
-    cdef np.ndarray[np.double_t, ndim=1] deg = A.sum(axis=0)
-    cdef double m = deg.sum()/2.0
-    cdef np.ndarray[np.double_t, ndim=2] S = sums_by_segment(A)
-    S /= m
-    return S
+#     """
+#     cdef np.ndarray[np.double_t, ndim=1] deg = A.sum(axis=0)
+#     cdef double m = deg.sum()/2.0
+#     cdef np.ndarray[np.double_t, ndim=2] S = sums_by_segment(A)
+#     S /= m
+#     return S
 
 
 @cython.cdivision(True)
@@ -251,7 +251,9 @@ cpdef np.ndarray[np.double_t, ndim=1] log_backward(
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 @cython.wraparound(False)
-def log_zmatrix(np.ndarray[np.double_t, ndim=2] Ecomm, double beta):
+cpdef np.ndarray[np.double_t, ndim=2] log_zmatrix(
+    np.ndarray[np.double_t, ndim=2] Ecomm, 
+    double beta):
     """
     Return the subsystem Boltzmann weight matrix.
     
