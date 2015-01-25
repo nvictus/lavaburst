@@ -12,6 +12,11 @@ Contents:
    :maxdepth: 2
 
    intro
+   motivation
+   theory
+   algo
+   scoring
+
 
 
 

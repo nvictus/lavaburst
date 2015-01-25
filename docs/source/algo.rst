@@ -1,0 +1,147 @@
+Algorithms
+==========
+
+Optimal segmentation
+--------------------
+
+The most probable segmentation is the one that has the greatest (log)
+likelihood, or equivalently, is the lowest energy configuration of our
+system (the *ground state*). If we place the segment energies on the
+edges of the segmentation graph, and *sum the weights* along any given
+path from source to sink, then this becomes a straightforward case of
+**finding the shortest (longest) path** on this directed acyclic graph.
+
+.. math::  s_{\textrm{opt}} = \arg\!\max_{s \in S} \left({ - \displaystyle\sum_{[i,j) \in s} E(i,j)}\right)
+
+The optimal segmentation can be found in :math:`O(N^2)` time by dynamic
+programming. In the graphical models terminology, this algorithm goes by
+the name *max sum*. It can be further optimized (linearly bounded) if a
+maximum segment length is imposed.
+
+Marginal boundary probabilities
+-------------------------------
+
+Now, if we place the segment statistical weights on the edges of the
+segmentation graph and take the *product of weights* along any given
+path from source to sink, then we can obtain the partition function
+:math:`Z(\beta)` by **summing over all paths** starting at node
+:math:`0` and ending at node :math:`N`. Furthermore, we can consider
+segmentation "subsystems" spanning nodes :math:`i` through :math:`j`
+(:math:`i < j`) and similarly compute the sub-partition function
+:math:`Z_{i,j}` by summing over paths in that subsystem (see `Figure
+5 <#fig5>`__). The full system partition function :math:`Z` is
+equivalent to :math:`Z_{0,N}`. We have the following recursion
+relations:
+
+Forward sub-partition functions:
+
+.. raw:: latex
+
+   \begin{align}
+   & Z_{0,0} \equiv 1, \\\
+   & Z_{0,t} = \displaystyle\sum_{k=0}^t Z_{0,k} e^{-\beta E(k,t)} \; \forall t \in \{1, \ldots, N},
+   \end{align}
+
+Backward sub-partition functions:
+
+.. raw:: latex
+
+   \begin{align}
+   & Z_{N,N} \equiv 1, \\\
+   & Z_{N-t,N} = \displaystyle\sum_{k=0}^t Z_{N-k,N} e^{-\beta E(N-t,N-k)} \; \forall t \in \{1, \ldots, N}.
+   \end{align}
+
+This forms the basis of a dynamic programming algorithm that goes by
+several names: *sum-product*, forward-backward, belief-propagation, and
+others.
+
+.. raw:: html
+
+   <center>
+
+.. raw:: html
+
+   </center>
+
+With these forward and backward statistical weight sums, the marginal
+probability of each node being a boundary is obtained from
+
+.. math::  p(x_i = 1) = \frac{Z_{0,i} Z_{i,N}}{Z_{0,N}} .
+
+Hence, although the number of segmentations is exponential in the number
+of nodes, it is possible to compute the partition function and marginal
+boundary probabilities in :math:`O(N^2)` time.
+
+.. raw:: html
+
+   <center>
+
+.. raw:: html
+
+   </center>
+
+One can go further and compute the entire set of :math:`Z_{ij}` in
+:math:`O(N^3)` and obtain co-occurrence probabilities for all pairs of
+nodes. The marginal probability of two nodes co-occurring as segment
+boundaries is given by
+
+.. math::  p(x_i = 1, x_j = 1) = \frac{Z_{0,i} Z_{i,j} Z_{j,N}} {Z_{0,N}} 
+
+This formula can be generalized to any number of boundaries.
+
+Marginal segment probabilities
+------------------------------
+
+We can make use of the forward and backward sub-partition functions to
+efficiently compute two other quantities of interest.
+
+The marginal probability of the occurrence of a specific segment
+:math:`[i,j)` is given by
+
+.. math::  p(x_i = 1, x_j = 1, x_k = 0 \textrm{ for } i \lt k \lt j) = \frac{Z_{0,i} e^{-\beta E(i,j)} Z_{j,N}} {Z_{0,N}} 
+
+.. raw:: html
+
+   <center>
+
+.. raw:: html
+
+   </center>
+
+
+
+After pre-computing marginal statistical weights for all segments, we
+can further apply dynamic programming to sum up all paths such that
+:math:`i`\ th and :math:`j`\ th genomic bin *co-occur in a common
+segment*. By computing this for all pairs of bins, the resulting
+marginal segment co-occurrence matrix gives a representation of the
+ensemble that is easy to compare visually to the original Hi-C matrix.
+The entire procedure does not exceed :math:`O(N^2)`.
+
+.. math::  p( x_k = 0 \textrm{ for } i \lt k \le j) = \sum_{p = 0}^i \sum_{q =j+1}^N \frac{ Z_{0,p} e^{-\beta E(p,q)} Z_{q,N}}{Z_{0,N}} 
+
+.. raw:: html
+
+   <center>
+
+.. raw:: html
+
+   </center>
+
+Sampling
+--------
+
+It is possible to obtain independent samples from the ensemble by
+performing a random walk on the segmentation graph. One requirement is
+to first pre-compute the marginal boundary probabilities. Then one
+proceeds as follows:
+
+-  Select an initial boundary :math:`x_0` by sampling from the marginal
+   boundary distribution.
+-  Perform a forward random walk from :math:`x_0` to the sink node, and
+   a backward random walk from :math:`x_0` to the source node, by
+   randomly selecting arcs according to their Boltzmann weights.
+
+Hence, samples can be generated without the need for Markov chain-based
+sampling methods (e.g. Metropolis sampling).
+
