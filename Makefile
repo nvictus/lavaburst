@@ -1,9 +1,11 @@
+BUILDDIR=lavaburst
+
 .PHONY: all clean build test install uninstall
 
 all: clean build test
 
 clean:
-	rm lavaburst/*.so
+	rm $(BUILDDIR)/*.so
 
 build:
 	python setup.py build_ext --inplace
