@@ -47,7 +47,7 @@ cpdef get_starts(np.ndarray[np.double_t, ndim=1] opt, np.ndarray[np.int_t, ndim=
 def optimal_segmentation(np.ndarray[np.double_t, ndim=2] score):
     opt, optk = max_sum(score)
     starts = get_starts(opt, optk)
-    return starts, optk
+    return starts, opt
 
 
 def consensus_segmentation(list domains, occ):

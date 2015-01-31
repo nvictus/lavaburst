@@ -1,12 +1,12 @@
 from __future__ import division
 import itertools
 
-from nose.tools import with_setup, assert_raises
+from nose.tools import with_setup, assert_raises, assert_equal
 from scipy.linalg import block_diag
 import numpy as np
 where = np.flatnonzero
 
-from lavaburst import segment
+from lavaburst import segment, scoring
 
 
 A = 10*block_diag(np.ones((4,4)), np.ones((5,5)), np.ones((4,4))).astype(float)
@@ -18,8 +18,8 @@ def test_sums_by_segment():
     for i in xrange(n+1):
         for j in xrange(i, n+1):
             Zseg[i,j] = Zseg[j,i] = np.sum(A[i:j,i:j]/2.0)
-    assert np.allclose(segment.sums_by_segment(A), Zseg)
-    assert np.allclose(segment.normalized_sums_by_segment(A), Zseg/Zseg[0,n])
+    assert np.allclose(scoring.sums_by_segment(A), Zseg)
+    assert np.allclose(scoring.normalized_sums_by_segment(A), Zseg/Zseg[0,n])
 
 
 class BruteForceEnsemble(object):
@@ -167,8 +167,8 @@ class BruteForceEnsemble(object):
 
 N = len(A)
 k = A.sum(axis=0)
-Zseg = segment.normalized_sums_by_segment(A)
-Znull = segment.normalized_sums_by_segment(np.outer(k,k))
+Zseg = scoring.normalized_sums_by_segment(A)
+Znull = scoring.normalized_sums_by_segment(np.outer(k,k))
 Eseg = -Zseg + Znull
 e = BruteForceEnsemble(Zseg - Znull)
 
@@ -178,7 +178,9 @@ def print_pair(A,B):
 
 def test_optimal_segmentation():
     starts, opt = segment.optimal_segmentation(Zseg-Znull)
-    assert np.all(e.optimal_segmentation() == np.r_[starts, N])
+    s = e.optimal_segmentation()
+    assert e.score_state(s) == opt[-1]
+    assert np.all(s == np.r_[starts, N])
 
 def test_consenus_segmentation():
     pass
