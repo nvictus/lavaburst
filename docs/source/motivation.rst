@@ -1,6 +1,9 @@
 Motivation
 ==========
 
+What's in a domain?
+-------------------
+
 The first large-scale three-dimensional features about chromatin gleaned
 from early Hi-C studies were the open and closed regions of chromatin
 called compartments (see Figure ). More recent Hi-C mapping identified
@@ -17,43 +20,29 @@ structural signatures at many different scales and resolutions in order
 to identify more precisely what features are predictive of biological
 function.
 
-.. raw:: html
+.. _figure-1:
 
-   <center>
-   <figure>
+.. figure:: static/img/motiv-eig-tads.png
+   :figwidth: 75%
+   :align: center
+   :alt: features in Hi-C maps
 
-.. raw:: html
+   Fig. 1
 
-   <figcaption>
+   Structural features observed in Hi-C data. (a) Compartments (average size :math:`\sim` 5Mb) form the characteristic plaid pattern in the heatmaps (single chromosome shown). The signal is extracted using spectral decomposition. (b) TADs are smaller (median size :math:`\sim` 400-500kb) segments that are strongly conserved between cell types.
 
-Structural features observed in Hi-C data. (a) Compartments (average
-size
-$\ :math:`5Mb) form the characteristic plaid pattern in the heatmaps (single chromosome shown). The signal is extracted using spectral decomposition. (b) TADs are smaller (median size `\ $400-500kb)
-segments that are strongly conserved between cell types.
 
-.. raw:: html
-
-   </figcaption>
-   </figure>
-   </center>
-
+Finding communities in a haystack
+---------------------------------
 
 Hi-C heatmaps :math:`A_{ij}` provide quantitative readouts for pairs of
 genomic coordinate bins :math:`i` and :math:`j`. We can regard a
 symmetric heatmap matrix :math:`A` as the adjacency matrix of an
-undirected weighted graph, whose nodes are genomic bins (see `Figure
-??? <#fig_igraph>`__). The edge weight :math:`A_{ij}` is an interaction
+undirected weighted graph, whose nodes are genomic bins (see :ref:`figure-1`). 
+The edge weight :math:`A_{ij}` is an interaction
 score for bins :math:`i` and :math:`j`. In the case of processed Hi-C
 data, this is normally interpreted as the relative contact frequency
 between the two genomic loci.
-
-.. raw:: html
-
-   <center>
-
-.. raw:: html
-
-   </center>
 
 A network-oriented perspective makes it tempting to apply graph
 algorithms for node partitioning, also known as *community detection* in
@@ -70,10 +59,26 @@ between two nodes :math:`i` and :math:`j` of degree :math:`k_i` and
 :math:`k_j` is :math:`\frac{k_i k_j}{2m}`, where :math:`m` is the total
 edge weight of the graph.
 
+
+.. _figure-2:
+
+.. figure:: static/img/motiv-hic-graph.png
+   :figwidth: 75%
+   :align: center
+   :alt: Hi-C interaction heatmap as a graph
+
+   Fig. 2
+
+   A binned Hi-C contact frequency heatmap can be interpreted as a complete weighted graph (including zero edge weights) between :math:`N` genomic bins.
+
+
 The multi-resolution form of the modularity function :math:`Q` for a
 partition :math:`\pi` of a network's nodes :math:`\{1,2, \ldots, N\}` is
 
-.. math::  Q(\pi) = \frac{1}{2m}\sum_{\lt i,j \gt} \left(A_{ij} - \gamma \frac{k_i k_j}{2m}\right)\delta(\pi_i,\pi_j). \tag{1}
+.. _equation-potts:
+
+.. math::  Q(\pi) = \frac{1}{2m}\sum_{\lt i,j \gt} \left(A_{ij} - \gamma \frac{k_i k_j}{2m}\right)\delta(\pi_i,\pi_j). 
+   :label: potts
 
 where the summation runs over all pairs of nodes in the same community
 (:math:`\delta(\pi_i, \pi_j) = 1` if :math:`\pi_i=\pi_j` and :math:`0`
@@ -99,9 +104,12 @@ therefore corresponds to minimizing the Potts Hamiltonian
 :math:`H_{potts}(\pi) = -mQ(\pi)` to find the ground state configuration
 of the spins.
 
-In general, modularity maximization is an NP-hard problem, but we gain a
+Restrict the search space
+-------------------------
+
+In general, modularity maximization is NP-complete \cite{}, but we gain a
 great deal of traction if we restrict the solution space of partitions
-of the nodes to *segmentations*, where only chains of consecutive nodes
+of the nodes to **segmentations**, where only chains of consecutive nodes
 can be grouped together. This is convenient because many of the
 interesting features seen by eye in Hi-C data, such as TADs and their
 apparent substrata, are segmental. Not only can we compute a single

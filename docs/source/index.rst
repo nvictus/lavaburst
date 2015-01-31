@@ -16,6 +16,9 @@ Contents:
    theory
    algo
    scoring
+   examples
+   related
+   extend
 
 
 

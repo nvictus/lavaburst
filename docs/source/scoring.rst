@@ -1,19 +1,28 @@
 Scoring systems
 ===============
 
+Extensivity
+-----------
 
-The Potts energy model
-----------------------
+Many intuitive scoring criteria for segments, such as fold-enrichment, produce quantities that are "intensive", that is, they do not scale with a segment's length. Since energies (and scores) are extensive quantities, applying an intensive measure produces an implicit *a priori* bias against large segments, because a segmentation with *larger* segments will have *fewer* segments, and therefore a lower cumulative score when fold-enrichment among all segments is identical. 
 
-In the space of segmentations :math:`S`, we can decompose the Potts
-Hamiltonian in (1) into an energy function for segments:
+Therefore, it is important to note that to turn an intensive segment quality metric into a scoring function with a uniform prior on segment length, one must scale a segment's score in direct proportion to its length in bins: a "fair" scoring function must be extensive.
 
-.. raw:: latex
+On the other hand, we can impose an explicit prior on segment length by building a scoring function from an intensive quality metric and applying to it a particular scaling relation with respect to segment length.
 
-   \begin{align}
-   E_{potts}(a,b) &= -\frac{1}{m} \sum_{i=a}^b \sum_{j=i}^b \left(A_{ij}  - \gamma\frac{k_i k_j}{2m} \right)  \\\
+
+Log-odds scores
+---------------
+
+
+Potts energy model
+------------------
+
+In the space of segmentations :math:`S`, we can decompose the multiresolution :ref:`Potts <equation-potts>` Hamiltonian described  earlier into an energy function for segments:
+
+.. math::
+   E_{potts}(a,b) &= -\frac{1}{m} \sum_{i=a}^b \sum_{j=i}^b \left(A_{ij}  - \gamma\frac{k_i k_j}{2m} \right)  \\
           &= E_{seg}(a,b) - \gamma E_{null}(a,b)
-   \end{align}
 
 where :math:`E_{seg}(a,b)` is proportional to the sum of interaction
 scores between nodes in the segment :math:`[a,b)`, and
@@ -34,108 +43,18 @@ according to a log-likelihood ratio against a background distribution.
 In particular, the configuration background model enforces a
 characteristic segment size (resolution).
 
-Results
--------
 
-The segmentation algorithm was run on high quality intra-chromosomal
-Hi-C heatmaps with 40kb bins for cell types IMR90 (lung fibroblast) and
-H1 (human embryonic stem cell), generated from the raw data of and and
-processed using the method of Imakaev . The figure below shows that by
-increasing the resolution parameter :math:`\gamma`, one obtains a
-monotonic increase in the number of segments (equivalently, the number
-of boundary nodes) in the optimal segmentation. This results in a
-characteristic \`\`boundary saturation'' curve for each heatmap (see
-Figure ).
+Other scoring functions
+-----------------------
 
-Note that our formulation of the segmentation problem did not explicity
-introduce "gap" segments that occur between high scoring "domain"
-segments. Instead, regions with low scores accumulate sequences of
-consecutive boundary nodes that imply a lack of discernable domain
-structure, as far as the resolution of the data allows.
+Armatus
+~~~~~~~
+Filipova et al (2014) presented the optimal segmentation algorithm in the context
+of a Hi-C domain scoring function with a tunable scale parameter to find domains
+at multiple resolutions.
 
-The y-axis gives the number fraction of nodes :math:`\theta` that are
-the starting boundaries of a segment. Because in the Potts model, the
-expected number of communities found scales as :math:`\sqrt{\gamma m}` ,
-the values on the x-axis are rescaled to make the saturation curves from
-different chromsome heatmaps comparable. Interestingly, the curves for
-most chromosomes collapse near one another, with characteristic profiles
-for the two cell types.
+Corner score
+~~~~~~~~~~~~
 
-.. raw:: html
-
-   <center>
-       
-
-optimal segmentation (blue triangles) at resolution :math:`\gamma=4`,
-IMR90 chr22, pixels are log-transformed Hi-C data
-
-.. raw:: html
-
-   </center>
-
-   <center>
-       
-
-boundary saturation curves as function of resolution parameter
-:math:`\gamma` (optimal segmentations, i.e. zero temperature)
-
-.. raw:: html
-
-   </center>
-
-   <center>
-       
-
-marginal boundary distributions at different temperatures
-(:math:`1/\beta`)
-
-.. raw:: html
-
-   </center>
-
-
-   <center>
-       
-
-upper triangle: marginal boundary co-occurrence distribution at finite
-temperature
-
-.. raw:: html
-
-   </center>
-
-   <center>
-       
-
-upper triangle: (log) marginal segment distribution :math:`\gamma = 8`
-at finite temperature
-
-.. raw:: html
-
-   </center>
-
-   <center>
-       
-
-upper triangle: marginal co-segmentation distribution :math:`\gamma = 6`
-at finite temperature
-
-.. raw:: html
-
-   </center>
-
-
-   <!-- ### Limitations ###
-
-
-   ---
-
-   ### Instructions ###
-
-   1-3 pages.
-
-   To the extent that you have arried out some of the proposed research, present the **results of your initial studies**.
-
-   It is not necessary to have achieved significant progress, but you should have attempted to carry out procedures to assess their feasibility.
-
-   If you have not yet embarked on the proposed research project, but have done other research work, summarize the highlights of that work. -->
+Phase-consistency score
+~~~~~~~~~~~~~~~~~~~~~~~
