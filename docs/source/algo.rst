@@ -156,13 +156,13 @@ performing stochastic backtracking walks on the segmentation graph. First, one m
    available choices by sampling the discrete distribution whose probabilities are given by:
 
 .. math:: 
-   p(N \to k) = \frac{Z_{0,k}}{Z_{0,N}}
+   p(N \to k) = \frac{Z_{0,k}}{Z_{0,N}}e^{-\beta E(k,N)}
 
 
 -  Continue the backward random walk by sampling predecessor nodes :math:`k'` until the source node :math:`0` is reached.
 
 .. math:: 
-   p(k \to k') = \frac{Z_{0,k'}}{Z_{0,k}}
+   p(k \to k') = \frac{Z_{0,k'}}{Z_{0,k}}e^{-\beta E(k,k')}
 
 Alternatively, one can use the backward subpartition functions and stochastically walk from :math:`0` to :math:`N`.
 
