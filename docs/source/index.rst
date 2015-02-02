@@ -19,6 +19,7 @@ Contents:
    examples
    related
    extend
+   references
 
 
 

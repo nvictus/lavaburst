@@ -20,28 +20,28 @@ Potts energy model
 
 In the space of segmentations :math:`S`, we can decompose the multiresolution :ref:`Potts <equation-potts>` Hamiltonian described  earlier into an energy function for segments:
 
+.. comment
+	.. math::
+	   E_{potts}(a,b) &= -\frac{1}{m} \sum_{i=a}^b \sum_{j=i}^b \left(A_{ij}  - \gamma\frac{k_i k_j}{2m} \right)
+
+	where :math:`E_{seg}(a,b)` is proportional to the sum of interaction
+	scores between nodes in the segment :math:`[a,b)`, and
+	:math:`E_{null}(a,b)` is the corresponding expected value under the null
+	model.
+
+When a heatmap is a stochastic matrix (e.g. a *balanced* Hi-C heatmap), we can take all :math:`k_i = 1` and :math:`2m = N`. Then the Potts energy function can be written:
+
 .. math::
-   E_{potts}(a,b) &= -\frac{1}{m} \sum_{i=a}^b \sum_{j=i}^b \left(A_{ij}  - \gamma\frac{k_i k_j}{2m} \right)  \\
-          &= E_{seg}(a,b) - \gamma E_{null}(a,b)
+   S_{\textrm{potts}}(a,b) &= \sum_{i=a}^{b-1}\sum_{j=a}^{b-1} \left(A_{ij}  - \frac{\gamma}{N} \right) \\
+   				  &= \left[\sum_{i=a}^{b-1}\sum_{j=a}^{b-1} A_{ij}\right]  - \left[\frac{\gamma}{N}(b-a)^2\right]
 
-where :math:`E_{seg}(a,b)` is proportional to the sum of interaction
-scores between nodes in the segment :math:`[a,b)`, and
-:math:`E_{null}(a,b)` is the corresponding expected value under the null
-model.
+Consider the submatrix corresponding to segment :math:`[a,b)` in the heatmap: ``A[a:b,a:b]``. We see that the configuration null model makes an assumption about how much edge mass is dedicated to every such submatrix *per pixel*. The Potts model score takes the difference between the observed mass in the submatrix and this background mass. 
 
-.. raw:: html
+The Potts scoring function imposes a segment length bias on segmentations: Take a segment with total edge mass :math:`c` and a scale it up to twice its size, so that it has twice its original length and total edge mass :math:`c^2`. We can see that the Potts score will increase by a factor of four, rather than two.
 
-   <center>
+.. comment
+	For a uniform balanced (i.e. flat) heatmap, the segment score would decrease quadratically with length for :math:`\gamma > 1/N`. The resolution parameter :math:`\gamma` determines the strength of this trend. The exact relationship between 
 
-.. raw:: html
-
-   </center>
-
-We see that the Potts model is equivalent to scoring individual segments
-according to a log-likelihood ratio against a background distribution.
-
-In particular, the configuration background model enforces a
-characteristic segment size (resolution).
 
 
 Other scoring functions
@@ -52,6 +52,12 @@ Armatus
 Filipova et al (2014) presented the optimal segmentation algorithm in the context
 of a Hi-C domain scoring function with a tunable scale parameter to find domains
 at multiple resolutions.
+
+.. math::
+	& q(a,b) = \frac{\sum_{i=a}^{b-1} \sum_{j=a}^{b-1} A_{ij}}{ (b-a)^\gamma }\\
+	& \mu(l) = \textrm{mean } q \textrm{ for segments with length } l \\
+	\\
+	& S_{ \textrm{armatus} }(a,b) = \max \left(0, q(a,b) - \mu(b-a) \right)
 
 Corner score
 ~~~~~~~~~~~~

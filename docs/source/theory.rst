@@ -2,7 +2,7 @@ Theory
 ======
 
 The segmentation path graph
------------------------
+---------------------------
 
 To simplify the logic of handling intervals, it is common practice in
 sequence analysis to use a 0-based coordinate system that labels

@@ -16,6 +16,9 @@ path from source to sink, then this becomes a straightforward case of
 The optimal segmentation can be found in :math:`O(N^2)` time by dynamic
 programming [Fillipova et al].
 
+.. math::
+   & H_0 = 0 \\
+   & H_i = \min_{0 \le k \lt i} \{ H_k + E(k,i-1) \}
 
 In the graphical models terminology, this algorithm goes by
 the name *max sum*. It can be further optimized (linearly bounded) if a
@@ -156,13 +159,13 @@ performing stochastic backtracking walks on the segmentation graph. First, one m
    available choices by sampling the discrete distribution whose probabilities are given by:
 
 .. math:: 
-   p(N \to k) = \frac{Z_{0,k}}{Z_{0,N}}e^{-\beta E(k,N)}
+   p(k \to N) = \frac{Z_{0,k}}{Z_{0,N}}e^{-\beta E(k,N)}
 
 
 -  Continue the backward random walk by sampling predecessor nodes :math:`k'` until the source node :math:`0` is reached.
 
 .. math:: 
-   p(k \to k') = \frac{Z_{0,k'}}{Z_{0,k}}e^{-\beta E(k,k')}
+   p(k' \to k) = \frac{Z_{0,k'}}{Z_{0,k}}e^{-\beta E(k,k')}
 
 Alternatively, one can use the backward subpartition functions and stochastically walk from :math:`0` to :math:`N`.
 
