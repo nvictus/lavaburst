@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+from livereload import Server, shell
+
+server = Server()
+
+server.watch('source/', shell('make html'))
+server.serve(host='127.0.0.1', port=4002, root='build/html')
+
