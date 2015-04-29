@@ -3,6 +3,169 @@ import itertools
 import numpy as np
 where = np.flatnonzero
 
+
+def masked_ufunc(ufunc, wheremask, axis=(0,1)):
+    """
+    Wraps a numpy ufunc to apply an operation on a subset of rows and/or columns.
+    Note: ignored rows/columns receive uninitialized junk values unless an 'out'
+    array is passed to the ufunc.
+
+    """
+    wheremask = np.asarray(wheremask, dtype=bool)
+    def wrapped(*args, **kwargs):
+        if axis == (0,1):
+            kwargs['where'] = np.logical_or.outer(wheremask, wheremask)
+        elif axis == 0:
+            kwargs['where'] = wheremask
+        else:
+            kwargs['where'] = wheremask.reshape(-1, 1)
+        return ufunc(*args, **kwargs)
+    return wrapped
+
+
+def masked_normalize(a, wheremask, axis=0):
+    """
+    Normalize the data along an axis for a subset of rows or columns.
+
+    """
+    a = np.array(a, dtype=a.dtype)
+    wheremask = np.asarray(wheremask, dtype=bool)
+    if axis == 0:
+        s = a.sum(axis=0)
+        a = np.divide(a, s, where=wheremask, out=a)
+    else:
+        s = a.sum(axis=1)
+        a = np.divide(a, s, where=wheremask.reshape(-1, 1), out=a)
+    return a
+
+
+def mask_compress(a, passmask, axis=(0,1)):
+    """
+    Compress a 1d or 2d numpy array along one or both axes by removing a subset 
+    of rows and/or columns.
+
+    """
+    passmask = np.asarray(passmask, dtype=bool)
+    
+    if a.ndim == 1:
+        return a[passmask]
+
+    elif a.ndim == 2:
+        if axis == (0,1):
+            return a.compress(passmask, axis=0)\
+                    .compress(passmask, axis=1) 
+        elif axis == 0:
+            return a.compress(passmask, axis=0)
+        elif axis == 1:
+            return a.compress(passmask, axis=1)
+        else:
+            raise ValueError("'axis' must be 0, 1 or (0,1)")
+
+    raise TypeError("Input array must be rank 1 or 2")
+
+
+def mask_restore(b, passmask, fill_value=0, axis=(0,1)):
+    """
+    Restore the rows and/or columns filtered out using passmask to produce b.
+
+    """
+    passmask = np.asarray(passmask, dtype=bool)
+    n = len(passmask)
+    fill_if = ~passmask
+
+    if b.ndim == 1:
+        a = np.zeros(n, dtype=b.dtype)
+        a[passmask] = b
+        if fill_value: a[fill_if] = fill_value
+        return a
+
+    elif b.ndim == 2:
+        if axis == (0,1):
+            a = np.zeros((n, n), dtype=b.dtype)
+            a[np.ix_(passmask, passmask)] = b
+            if fill_value: a[np.ix_(fill_if, fill_if)] = fill_value
+            return a
+        elif axis == 0:
+            a = np.zeros((n, b.shape[1]), dtype=b.dtype)
+            a[passmask, :] = b
+            if fill_value: a[fill_if, :] = fill_value
+            return a
+        elif axis == 1:
+            a = np.zeros((b.shape[0], n), dtype=b.dtype)
+            a[:, passmask] = b
+            if fill_value: a[:, fill_if] = fill_value
+            return a
+        else:
+            raise ValueError("'axis' must be 0, 1 or (0,1)")
+
+    raise TypeError("Input array must be rank 1 or 2")
+
+
+def mask_compress_path(path, passmask):
+    """
+    Return coordinates of path nodes as they would appear in the compressed
+    sequence. If a path node lies inside region to be "compressed", it is 
+    replaced with the coordinates of the ends of that compressed region.
+
+    """
+    # Original coordinates of nodes being kept
+    keep_loc = where(passmask)
+    n = len(keep_loc)
+    
+    # Find ends of compressed regions
+    breakpoints = np.diff(keep_loc) > 1
+    bad_regions = zip(keep_loc[:-1][breakpoints] + 1, keep_loc[1:][breakpoints])
+
+    # Convert original coordinates to compression coordinates
+    # Force path to include 0 and compressed sequence length
+    new_path = [0, n]
+    i = 0
+    for loc in path:
+        while i < n and keep_loc[i] <= loc:
+            if keep_loc[i] == loc:
+                new_path.append(i)
+            i += 1
+
+        for a, b in bad_regions:
+            if a <= loc < b:
+                new_path.append(a)
+                new_path.append(b)
+
+    new_path = np.array(sorted(set(new_path)), dtype=int)
+    return new_path
+
+
+def mask_restore_path(path, passmask):
+    """
+    Return coordinates of path nodes as they would appear in the decompressed
+    sequence. If a path node lies at a compression point, it is replaced with
+    the coordinates of both ends of the compressed region. No other compression
+    points are included in the expanded path.
+
+    """
+    # Expansion coordinates of nodes kept
+    pass_loc = where(passmask)
+
+    # Find ends of compressed regions
+    breakpoints = np.diff(pass_loc) > 1
+    bad_regions = zip(pass_loc[:-1][breakpoints] + 1, pass_loc[1:][breakpoints])
+
+    # Convert compression coordinates to expansion coordinates
+    # Force path to include 0 and expanded sequence length
+    starts = path[:-1]
+    new_path = list(pass_loc[starts])
+    more = [0, len(passmask)]
+    for l, r in bad_regions:
+        if r in new_path:
+            more.append(l)
+        if l in new_path:
+            more.append(r)
+    new_path = new_path + more
+
+    return np.array(sorted(set(new_path)), dtype=int)
+
+
+
 def tilt_heatmap(A, n_diags=None, pad=np.nan):
     """
     Vertically stacks the upper diagonals of A onto a new matrix of the same 
@@ -80,6 +243,68 @@ def reveal_triu(A, k=0):
     return np.ma.masked_where(np.logical_not(np.triu(E, k)), A)
 
 
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.nonecheck(False)
+# def log_contactmap_from_insulation_prob(
+#         np.ndarray[np.double_t, ndim=1] p_insul):
+
+#     cdef np.ndarray[np.double_t, ndim=1] log_pc = np.log(1 - p_insul)
+    
+#     # N bins, n bin edges
+#     cdef int N = len(log_pc) - 1
+#     cdef int n = N+1 
+#     cdef np.ndarray[np.double_t, ndim=2] L = np.zeros((n, n), dtype=float)
+#     cdef int i, diag
+
+#     # base case (first two diagonals) 
+#     # XXX --- leave out the main diag for consistency?
+#     for i in range(0, n):
+#         L[i, i] = log_pc[i]
+
+#     # first diag
+#     for i in range(0, n-1):
+#         L[i, i+1] \
+#             = L[i+1, i] \
+#             = log_pc[i] + log_pc[i+1]
+
+#     for diag in range(2, n):
+#         for i in range(0, n-diag):
+#             L[i, i+diag] \
+#                 = L[i+diag, i] \
+#                 = L[i, i+diag-1] + L[i+1, i+diag] - L[i+1, i+diag-1]
+
+#     return L
+
+
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.nonecheck(False)
+# def fill_triu_inplace(
+#         np.ndarray[np.double_t, ndim=2] A, 
+#         double value=np.nan):
+
+#     cdef int N = len(A)
+#     cdef int i, j
+#     for i in range(N):
+#         for j in range(i, N):
+#             A[i, j] = value
+
+
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.nonecheck(False)
+# def fill_tril_inplace(
+#         np.ndarray[np.double_t, ndim=2] A, 
+#         double value=np.nan):
+
+#     cdef int N = len(A)
+#     cdef int i, j
+#     for i in range(N):
+#         for j in range(0, i):
+#             A[i, j] = value
+
+
 # def reveal_diagonal_band(A, k=0, lower=True, upper=True):
 #     E = np.ones(A.shape)
 #     hide_mask = np.logical_or(np.tril(E, -k), np.triu(E, k))
@@ -91,110 +316,6 @@ def reveal_triu(A, k=0):
 #     A[idx, :] = fillvalue
 #     A[:, idx] = fillvalue
 #     return A
-
-
-def mask_normalize(a, pass_mask, axis=0):
-    a = np.array(a, dtype=a.dtype)
-    if axis == 0:
-        s = a[pass_mask,:].sum(axis=0)[pass_mask]
-        a[:,pass_mask] /= s
-    else:
-        s = a[:,pass_mask].sum(axis=1)[pass_mask]
-        a[pass_mask,:] /= s        
-    return a
-
-
-def mask_compress(a, pass_mask, axis=(0,1)):
-    if a.ndim == 1:
-        return a[pass_mask]
-    elif a.ndim == 2:
-        if axis == (0,1):
-            return a.compress(pass_mask, axis=0)\
-                    .compress(pass_mask, axis=1) 
-                    #a[pass_mask,:][:,pass_mask]
-        elif axis == 0:
-            return a.compress(pass_mask, axis=0)
-                    #a[pass_mask,:]
-        elif axis == 1:
-            return a.compress(pass_mask, axis=1)
-                    #a[:,pass_mask]
-        else:
-            raise TypeError("axis must be 0, 1 or (0,1)")
-    raise TypeError("Input array must be rank 1 or 2")
-
-
-def mask_restore(b, pass_mask, fill_value=0, axis=(0,1)):
-    n = len(pass_mask)
-    fill_mask = np.logical_not(pass_mask)
-    if b.ndim == 1:
-        a = np.zeros(n, dtype=b.dtype)
-        a[pass_mask] = b
-        if fill_value: a[fill_mask] = fill_value
-        return a
-    elif b.ndim == 2:
-        if axis == (0,1):
-            a = np.zeros((n,n), dtype=b.dtype)
-            a[np.ix_(pass_mask,pass_mask)] = b
-            if fill_value: a[np.ix_(fill_mask,fill_mask)] = fill_value
-            return a
-        elif axis == 0:
-            a = np.zeros((n,b.shape[1]), dtype=b.dtype)
-            a[pass_mask,:] = b
-            if fill_value: a[fill_mask,:] = fill_value
-            return a
-        elif axis == 1:
-            a = np.zeros((b.shape[0],n), dtype=b.dtype)
-            a[:,pass_mask] = b
-            if fill_value: a[:,fill_mask] = fill_value
-            return a
-        else:
-            raise TypeError("axis must be 0, 1 or (0,1)")
-    raise TypeError("Input array must be rank 1 or 2")
-
-
-def mask_compress_starts(starts, pass_mask):
-    # if a start position is in a masked region, attempt to shift it to the 
-    # first unmasked position in the interval
-    keep_pos = where(pass_mask)
-    boundaries = np.r_[starts, len(pass_mask)]
-    relocated_starts = []
-    for i, curr in enumerate(boundaries[:-1]):
-        next = boundaries[i+1]
-        j = curr
-        while j < next:
-            if j in keep_pos:
-                relocated_starts.append(j)
-                break
-            j += 1
-    relocated_starts = np.array(relocated_starts)
-    starts_mask = np.zeros(len(pass_mask), dtype=bool)
-    starts_mask[relocated_starts] = True
-    new_starts = where(starts_mask[pass_mask])
-    return new_starts
-
-
-def mask_restore_starts(starts, pass_mask):
-    # Convert compressed coordinates to original coordinates
-    included = where(pass_mask)
-    new_starts = included[starts]
-    # Properly terminate intervals that end just before a masked region begins.
-    # This creates an interval that spans the masked region.
-    breaks = np.diff(included) > 1
-    breaks_left = included[:-1][breaks]
-    breaks_right = included[1:][breaks]
-    new_starts = list(new_starts) + \
-        [breaks_left[i] for (i, r) in enumerate(breaks_right) if r in new_starts]
-    # Start a new interval if the end of the sequence is masked.
-    # This creates a terminal interval in the final masked region.
-    if pass_mask[-1] == False:
-        j = len(pass_mask) - 1
-        while j > -1:
-            if pass_mask[j]:
-                new_starts.append(j+1)
-                break
-            j -= 1
-    new_starts.sort()
-    return new_starts
 
 
 def matshow(ax, A, **kw):
