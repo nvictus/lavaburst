@@ -96,6 +96,7 @@ def score_segmentation(Eseg, borders):
         score += Eseg[a,b]
     return score
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef inline int find_left(
@@ -107,6 +108,7 @@ cdef inline int find_left(
         if state[left] == 1:
             return left
     raise ValueError
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -120,6 +122,7 @@ cdef inline int find_right(
         if state[right] == 1:
             return right
     raise ValueError
+
 
 def conserved_op(
         np.ndarray[np.double_t, ndim=2] Eseg,
@@ -154,6 +157,7 @@ def conserved_op(
         sweep_conserved_op(s, N, Eseg, beta, up, down, state, energy)
 
     return state, energy
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

@@ -2,35 +2,45 @@ import cython
 import numpy as np
 cimport numpy as np
 
+from scipy.linalg import toeplitz
+
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cpdef sums_by_segment(np.ndarray[np.double_t, ndim=2] A):
+cpdef sums_by_segment(
+        np.ndarray[np.double_t, ndim=2] A, 
+        int offset=1,
+        int normalized=0):
     """
     S = sums_by_segment(A)
     Sum the edge weights in every segment of the graph represented by A.
 
     Input:
         A : N x N (double)
-        A symmetric square matrix. A[i,j] is the weight of the edge connecting
+        Symmetric square matrix. A[i,j] is the weight of the edge connecting
         nodes i and j. If there are nonzero self-weights in the graph, the 
         values on the diagonal A[i,i] are assumed to be twice the weight.
+
+        offset : int
+        Extends or reduces the shape of the resulting matrix. Used to switch
+        between closed [a,b] and half open interval [a,b+1) logic.
 
     Output:
         S : N+1 x N+1 (double)
         A symmetric square matrix of summed weights of all contiguous segments 
-        of nodes. S[a,b] is the sum of weights between all pairs of nodes in the 
-        half-open range [a..b-1] (excluding b).
+        of nodes. If offset = 1, S[a,b] is the sum of weights between all pairs 
+        of nodes in the half-open range [a..b-1] (excluding b).
 
     """
     cdef int N = len(A)
-    cdef np.ndarray[np.double_t, ndim=2] S = np.zeros((N+1,N+1), dtype=float)
+    cdef np.ndarray[np.double_t, ndim=2] S = np.zeros(
+        (N+offset,N+offset), dtype=float)
 
     cdef int i
     for i in range(N):
-        S[i,i+1] = S[i+1,i] = A[i,i]/2.0
+        S[i,i+offset] = S[i+offset,i] = A[i,i]/2.0
 
     cdef int start, end
     cdef np.ndarray[np.double_t, ndim=1] cumsum
@@ -39,8 +49,14 @@ cpdef sums_by_segment(np.ndarray[np.double_t, ndim=2] A):
         cumsum[end] = A[end,end]
 
         for start in range(end-1, -1, -1):
-            cumsum[start] = cumsum[start+1] + A[start,end]
-            S[start,end+1] = S[end+1,start] = S[start, end] + cumsum[start]
+            cumsum[start] = cumsum[start+offset] + A[start,end]
+            S[start,end+offset] = \
+                S[end+offset,start] = S[start, end] + cumsum[start]
+
+    cdef np.ndarray[np.double_t, ndim=1] deg
+    if normalized:
+        deg = A.sum(axis=0)
+        S /= (deg.sum()/2.0)
 
     return S
 
@@ -49,7 +65,9 @@ cpdef sums_by_segment(np.ndarray[np.double_t, ndim=2] A):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cpdef normalized_sums_by_segment(np.ndarray[np.double_t, ndim=2] A):
+cpdef normalized_sums_by_segment(
+        np.ndarray[np.double_t, ndim=2] A,
+        int offset=1):
     """
     S = normalized_sums_by_segment(A)
     Aggregate the edge weights of every segment of the graph represented by A 
@@ -66,39 +84,171 @@ cpdef normalized_sums_by_segment(np.ndarray[np.double_t, ndim=2] A):
     """
     cdef np.ndarray[np.double_t, ndim=1] deg = A.sum(axis=0)
     cdef double m = deg.sum()/2.0
-    cdef np.ndarray[np.double_t, ndim=2] S = sums_by_segment(A)
+    cdef np.ndarray[np.double_t, ndim=2] S = sums_by_segment(A, offset)
     S /= m
     return S
+
+
+# @cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.nonecheck(False)
+cpdef armatus_score(np.ndarray[np.double_t, ndim=2] Sseg, double gamma):
+    """
+    For each segment:
+        Rescale its score.
+        Subtract the mean rescaled score for segments of the same size.
+
+    """
+    cdef int N = len(Sseg) - 1
+    cdef np.ndarray[np.double_t, ndim=2] S = np.zeros((N+1, N+1), dtype=float)
+    cdef np.ndarray[np.double_t, ndim=1] mu = np.zeros(N+1, dtype=float)
+    cdef np.ndarray[np.int_t, ndim=1] count = np.zeros(N+1, dtype=int)
+    
+    cdef int start, end, size
+    for end in range(1, N+1):
+        for start in range(end-1, -1, -1):
+            size = end - start
+            S[start, end] = S[end, start] = Sseg[start, end] / size**gamma
+            mu[size] = (count[size]*mu[size] + S[start, end]) / (count[size] + 1)
+            count[size] += 1
+
+    cdef np.ndarray[np.double_t, ndim=2] Mu = np.zeros((N+1, N+1), dtype=float)
+    cdef int diag, i
+    for diag in range(N+1):
+        for i in range(0, N-diag):
+            Mu[i, diag+i] = Mu[diag+i, i] = mu[diag]
+    return S - Mu
 
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cpdef armatus_score(np.ndarray[np.double_t, ndim=2] Sseg, double gamma):
+def arrowhead(np.ndarray[np.double_t, ndim=2] A):
+    cdef int N = len(A)
+    cdef np.ndarray[np.double_t, ndim=2] R = np.zeros((N,N))
+    cdef int i, d
+    for i in range(N):
+        for d in range(0, N-i):
+            denom = (A[i,i-d] + A[i, i+d])
+            R[i,i+d] = R[i+d,i] = (A[i,i-d] - A[i,i+d])/denom if denom != 0 else 0
+    return R
+
+
+@cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def arrowhead_r(np.ndarray[np.double_t, ndim=2] A):
+    cdef int N = len(A)
+    cdef np.ndarray[np.double_t, ndim=2] R = np.zeros((N,N))
+    cdef int i, d
+    for i in range(N):
+        for d in range(0, N-i):
+            denom = (A[i,i-d] + A[i, i+d])
+            R[i,i+d] = R[i+d,i] = (A[i,i+d] - A[i,i-d])/denom if denom != 0 else 0
+    return R
+
+
+@cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def corner_score(np.ndarray[np.double_t, ndim=2] A):
+    cdef int N = len(A)
+    cdef np.ndarray[np.double_t, ndim=2] R = arrowhead(A)
+    cdef np.ndarray[np.double_t, ndim=2] U = np.zeros((N+1,N+1))
+    cdef int i, j, k
+    for i in range(0, N+1):
+        U[i,0] = 0.0
+        for j in range(i+1, N+1):
+            k = (i+j)//2
+            U[i,j] = U[j,i] = U[i,j-1] + R[i:k+1, j-1].sum()
+
+    cdef np.ndarray[np.double_t, ndim=2] R2 = arrowhead_r(np.flipud(np.fliplr(A)))
+    cdef np.ndarray[np.double_t, ndim=2] L = np.zeros((N+1,N+1))
+    for i in range(0, N+1):
+        L[i,0] = 0.0
+        for j in range(i+1, N+1):
+            k = (i+j)//2
+            L[i,j] = L[j,i] = L[i,j-1] + R2[i:k+1, j-1].sum()
+    L = np.flipud(np.fliplr(L))
+
+    cdef np.ndarray[np.double_t, ndim=2] norm = toeplitz(np.arange(N+1))
+    return (L-U)/norm
+
+
+def logbins(a, b, pace, N_in=0):
+    "create log-spaced bins"
+    from math import log
+    a = int(a)
+    b = int(b) 
+    beg = log(a)
+    end = log(b - 1)
+    pace = log(pace)
+    N = int((end - beg) / pace)     
+
+    if N_in != 0: N = N_in
+    if N_in > (b - a):
+        raise ValueError("Cannot create more bins than elements")
+    else:
+        N = (b - a)
+
+    pace = (end - beg) / N
+    mas = np.arange(beg, end + 0.000000001, pace)    
+    ret = np.exp(mas)
+    surpass = np.arange(a,a+N)
+    replace = surpass > ret[:N]-1
+    ret[replace] = surpass  
+    ret = np.array(ret, dtype = np.int)
+    ret[-1] = b 
+    return list(ret)
+
+
+@cython.boundscheck(False)
+@cython.nonecheck(False)
+@cython.wraparound(False)
+def diag_mean(A, mask):
     """
-    Rescale the segment sums.
-    For each segment, subtract the mean rescaled sum for segments of the same size.
+    Calculates averages of a contact map as a function of separation
+    distance, over regions where mask==1.
 
     """
-    N = len(Sseg) - 1
-    S = np.zeros((N+1, N+1), dtype=float)
-    mu = np.zeros(N+1, dtype=float)
-    count = np.zeros(N+1, dtype=int)
+    _data = np.array(A, dtype=float, order="C")
+    _datamask = np.array(mask == 1, dtype=int, order="C")
+    cdef np.ndarray[np.double_t, ndim=2] data = _data 
+    cdef np.ndarray[np.double_t, ndim=2] datamask = _datamask 
+    cdef N = data.shape[0]
 
-    for end in range(1, N+1):
-        for start in range(end-1, -1, -1):
-            size = end - start
-            S[start, end] = Sseg[start, end] / size**gamma
-            mu[size] = (count[size]*mu[size] + S[start, end])/(count[size] + 1)
-            count[size] += 1
+    _bins = logbins(1, N, 1.05)
+    _bins = [(0, 1)] + [(_bins[i], _bins[i+1]) for i in xrange(len(_bins)-1)]
+    _bins = np.array(_bins, dtype=int, order = "C")
+    cdef np.ndarray[np.int64_t, ndim = 2] bins = _bins
 
-    Mu = np.zeros((N+1, N+1), dtype=float)
-    for d in range(N+1):
-        for k in range(d, N-d):
-            Mu[d, k] = mu[d]
-    return S - Mu
+    cdef int M = len(bins)
+    cdef np.ndarray[np.double_t, ndim=1] avg = np.zeros(N, dtype=float)
+    cdef int i, j, start, end, count, offset
+    cdef double ss, meanss  
+    for i in range(M):
+        start, end = bins[i, 0], bins[i, 1]
+        ss = 0.0
+        count = 0
+        for offset in range(start, end):
+            for j in range(0, N-offset):
+                if datamask[offset+j, j] == 1:                    
+                    ss += data[offset+j, j]
+                    count += 1
+        #print start, end, count
+        meanss = ss / count
+        for offset in range(start, end):
+            avg[offset] = meanss
 
+            # for j in range(0, N-offset):
+            #     if datamask[offset+j, j] == 1:
+            #         B[offset+j, j] = B[j, offset+j] = meanss
+
+    return data
 
 # def arrowhead_l(A):
 #     N = len(A)
