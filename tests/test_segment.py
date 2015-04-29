@@ -1,10 +1,11 @@
 from __future__ import division
-import itertools
-
 from nose.tools import with_setup, assert_raises, assert_equal
+
+import itertools
 from scipy.linalg import block_diag
 import numpy as np
 where = np.flatnonzero
+
 
 from lavaburst import segment, scoring
 
@@ -177,13 +178,15 @@ def print_pair(A,B):
         print a, b
 
 def test_optimal_segmentation():
-    starts, opt = segment.optimal_segmentation(Zseg-Znull)
+    path, opt = segment.optimal_segmentation(Zseg-Znull)
     s = e.optimal_segmentation()
     assert e.score_state(s) == opt[-1]
-    assert np.all(s == np.r_[starts, N])
+    assert np.all(s == path)
 
 def test_consenus_segmentation():
-    pass
+    domains = [(1, 10), (5, 15), (1, 10), (1, 10)]
+    d = segment.consensus_segments(domains, weights=[1,1,1,1])
+    assert d == [(1, 10)]
 
 def test_log_forward():
     assert np.allclose(e.log_forward(1), segment.log_forward(Eseg, 1, 0, N))

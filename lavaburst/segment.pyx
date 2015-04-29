@@ -1,7 +1,8 @@
+from collections import defaultdict
 import cython
 import numpy as np
 cimport numpy as np
-from libc.math cimport log, exp
+from libc.math cimport log, exp, abs
 
 
 @cython.cdivision(True)
@@ -9,6 +10,17 @@ from libc.math cimport log, exp
 @cython.wraparound(False)
 @cython.nonecheck(False)
 cpdef max_sum(np.ndarray[np.double_t, ndim=2] score):
+    """
+    opt, optk = max_sum(S)
+
+    Perform max-sum algorithm (longest path) dynamic program on segmentation 
+    path graph with score matrix S.
+
+    Returns:
+        opt[i]  - optimal score of path from 0..i
+        optk[i] - first predecessor node on optimal path from 0..i
+
+    """
     cdef int N = len(score) - 1
     cdef np.ndarray[np.double_t, ndim=1] opt = np.zeros(N+1, dtype=float)
     cdef np.ndarray[np.int_t, ndim=1] optk = np.zeros(N+1, dtype=int)
@@ -32,38 +44,65 @@ cpdef max_sum(np.ndarray[np.double_t, ndim=2] score):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cpdef get_starts(np.ndarray[np.double_t, ndim=1] opt, np.ndarray[np.int_t, ndim=1] optk):
+cpdef get_path(np.ndarray[np.double_t, ndim=1] opt, np.ndarray[np.int_t, ndim=1] optk):
+    """
+    path = get_path(opt, optk)
+
+    Backtrack over predecessor nodes to get the optimal path from max-sum.
+
+    Returns:
+        path (array) - optimal path of nodes from 0..N
+
+    """
     cdef int N = len(opt) - 1
-    cdef np.ndarray[np.int_t, ndim=1] starts = np.zeros(N, dtype=int)
+    cdef np.ndarray[np.int_t, ndim=1] path = np.zeros(N, dtype=int)
     cdef int j = 0
-    i = N
+    i = path[j] = N
+    j += 1
     while i > 0:
-        i = starts[j] = optk[i]
+        i = path[j] = optk[i]
         j += 1
 
-    return starts[:j][::-1]
+    return path[:j][::-1]
 
 
+@cython.embedsignature(True)
 def optimal_segmentation(np.ndarray[np.double_t, ndim=2] score):
+    """
+    Perform max-sum algorithm (longest path) dynamic program on segmentation 
+    path graph with score matrix S.
+
+    Returns:
+        path (array) - optimal path of nodes from 0..N
+        opt  (array) - optimal score of subproblems
+
+    """
     opt, optk = max_sum(score)
-    starts = get_starts(opt, optk)
-    return starts, opt
+    path = get_path(opt, optk)
+    return path, opt
 
 
-def consensus_segmentation(list domains, occ):
-    # Returns consensus list of domains
-    # domains are 2-tuples given as half-open intervals [a,b)
+@cython.embedsignature(True)
+def consensus_segments(list segments, weights):
+    """
+    Returns consensus list of nonoverlapping segments.
+    Segments are 2-tuples given as half-open intervals [a,b).
+
+    """
+    occ = defaultdict(int)
+    for d, w in zip(segments, weights):
+        occ[d] += w
+
     cdef int i, j, s_choose, s_ignore
-    cdef tuple d
 
     # map each domain to its closest non-overlapping predecessor
-    cdef int M = len(domains)
+    cdef int M = len(segments)
     cdef np.ndarray[np.int_t, ndim=1] prev = np.zeros(M, dtype=int)
     for i in range(M-1, -1, -1):
-        d = domains[i]
+        d = segments[i]
         j = i - 1
         while j > -1:
-            if domains[j][1] <= d[0]: 
+            if segments[j][1] <= d[0]: 
                 prev[i] = j
                 break
             j -= 1
@@ -71,7 +110,7 @@ def consensus_segmentation(list domains, occ):
     # weighted interval scheduling dynamic program
     cdef np.ndarray[np.int_t, ndim=1] score = np.zeros(M, dtype=int)
     for i in range(1, M):
-        d = domains[i]
+        d = segments[i]
         s_choose = score[prev[i]] + occ[d]
         s_ignore = score[i-1]
         score[i] = max(s_choose, s_ignore)
@@ -80,7 +119,7 @@ def consensus_segmentation(list domains, occ):
     j = M - 1
     while j > 0:
         if score[j] != score[j-1]:
-            consensus.append(domains[j])
+            consensus.append(segments[j])
             j = prev[j]
         else:
             j -= 1
@@ -105,31 +144,56 @@ def consensus_segmentation(list domains, occ):
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 @cython.wraparound(False)
+@cython.embedsignature(True)
 cpdef np.ndarray[np.double_t, ndim=1] log_forward(
-        np.ndarray[np.double_t, ndim=2] Ecomm, 
-        double beta, 
+        np.ndarray[np.double_t, ndim=2] Eseg, 
+        double beta,
         int start, 
-        int end):
-    cdef int N = len(Ecomm) - 1 # number of nodes
+        int end,
+        int maxsize=-1):
+    """
+    Lf = log_forward(Eseg, beta, start, end)
+
+    Forward algorithm.
+
+    Input:
+        Eseg - segment energy matrix
+        beta - inverse temperature
+        start, end
+
+    Returns:
+        Lf (array) - forward statistical weights, length (end - start)
+
+    """
+    cdef int N = len(Eseg) - 1 # number of nodes
     if start < 0 or end > N:
         raise IndexError("start or end out of range")
+    if maxsize == -1:
+        maxsize = N
     cdef int n = end - start
     cdef np.ndarray[np.double_t, ndim=1] Lfwd = np.zeros(n+1, dtype=float)
     cdef np.ndarray[np.double_t, ndim=1] a = np.zeros(n+1, dtype=float) 
-    cdef int t, k
-    cdef double a_max
+    cdef int t, k, ms
+    cdef double a_max, a_min, c
 
     Lfwd[0] = 0.0
     for t in range(1, n+1):
         a_max = 0.0
-        for k in range(0, t):
-            a[k] = Lfwd[k] - beta*Ecomm[start+k, start+t]
+        a_min = 0.0
+        ms = max(t-maxsize, 0)
+        for k in range(ms, t):
+            a[k] = Lfwd[k] - beta*Eseg[start+k, start+t]
             if a[k] > a_max:
                 a_max = a[k]
+        #     elif a[k] < a_min:
+        #         a_min = a[k]
 
-        Lfwd[t] = a_max + log(np.exp(a[:t] - a_max).sum())
+        c = a_max #if a_max > abs(a_min) else a_min
+        Lfwd[t] = c + log(np.exp(a[:t] - c).sum())
     
     return Lfwd
+
+
 
 
 ###
@@ -149,31 +213,55 @@ cpdef np.ndarray[np.double_t, ndim=1] log_forward(
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 @cython.wraparound(False)
+@cython.embedsignature(True)
 cpdef np.ndarray[np.double_t, ndim=1] log_backward(
-        np.ndarray[np.double_t, ndim=2] Ecomm, 
+        np.ndarray[np.double_t, ndim=2] Eseg, 
         double beta, 
         int start, 
-        int end):
-    cdef int N = len(Ecomm) - 1 # n nodes
+        int end,
+        int maxsize=-1):
+    """
+    Lb = log_backward(Eseg, beta, start, end)
+
+    Backward algorithm.
+
+    Input:
+        Eseg - segment energy matrix
+        beta - inverse temperature
+        start, end
+
+    Returns:
+        Lb (array) - forward statistical weights, length (end - start)
+
+    """
+    cdef int N = len(Eseg) - 1 # n nodes
     if start < 0 or end > N:
         raise IndexError("start or end out of range")
+    if maxsize == -1:
+        maxsize = N
     cdef int n = end - start
     cdef np.ndarray[np.double_t, ndim=1] Lbwd = np.zeros(n+1, dtype=float)
     cdef np.ndarray[np.double_t, ndim=1] a = np.zeros(n+1, dtype=float)
-    cdef int k, t
-    cdef double a_max
+    cdef int k, t, ms
+    cdef double a_max, a_min, c
     
     Lbwd[n] = 0.0
     for t in range(1, n+1):
         a_max = 0.0
-        for k in range(t):
-            a[k] = Lbwd[n-k] - beta*Ecomm[end-t, end-k]
+        a_min = 0.0
+        ms = max(t-maxsize, 0)
+        for k in range(ms, t):
+            a[k] = Lbwd[n-k] - beta*Eseg[end-t, end-k]
             if a[k] > a_max:
                 a_max = a[k]
+            # elif a[k] < a_min:
+            #     a_min = a[k]
 
+        c = a_max #if a_max > abs(a_min) else a_min
         Lbwd[n-t] = a_max + log(np.exp(a[:t] - a_max).sum())
 
     return Lbwd
+
 
 ###
 # The following is equivalent to doing forward on each row, but does it one
@@ -183,23 +271,25 @@ cpdef np.ndarray[np.double_t, ndim=1] log_backward(
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 @cython.wraparound(False)
+@cython.embedsignature(True)
 cpdef np.ndarray[np.double_t, ndim=2] log_zmatrix(
-    np.ndarray[np.double_t, ndim=2] Ecomm, 
+    np.ndarray[np.double_t, ndim=2] Eseg, 
     double beta):
     """
-    Return the subsystem Boltzmann weight matrix.
+    Lz = log_zmatrix(Eseg, beta)
+
+    Compute the subsystem statistical weight matrix.
     
     Input:
         Eseg:  segment energy matrix
         beta:  inverse temperature
 
     Returns:
-        ln(W), where
-        W[a,b] = sum of Boltzmann weights corresponding to subsystem [a,b], 
-                 where a and b+1 are static boundaries
-    
+        ln(Z), where
+        Z[a,b] = sum of statistical weights corresponding to subsystem [a,b)
+
     """
-    cdef int N = len(Ecomm) - 1 # n nodes
+    cdef int N = len(Eseg) - 1 # n nodes
     cdef np.ndarray[np.double_t, ndim=2] Lz = np.zeros((N+1,N+1), dtype=float)
     cdef np.ndarray[np.double_t, ndim=2] a = np.zeros((N+1,N+1), dtype=float)
     cdef int i, j, k
@@ -209,72 +299,82 @@ cpdef np.ndarray[np.double_t, ndim=2] log_zmatrix(
     for j in range(1, N+1):
         for i in range(0, j): #range(j-1,-1,-1):
             for k in range(i, j):
-                a[i, k] = Lz[i, k] - beta*Ecomm[k, j]
+                a[i, k] = Lz[i, k] - beta*Eseg[k, j]
             a_max = a[i, i:j].max()
             Lz[i, j] = Lz[j, i] = a_max + log( np.exp(a[i, i:j] - a_max).sum() )
 
     return Lz
 
 
-def log_boundary_marginal(np.ndarray[np.double_t, ndim=2] Ecomm, double beta, int start, int end):
+@cython.embedsignature(True)
+def log_boundary_marginal(np.ndarray[np.double_t, ndim=2] Eseg, double beta, int start, int end):
     """
-    For each node in subsystem [start, end], return the sum of Boltzmann weights 
-    of segmentations having a boundary at that node, conditional on there being
-    boundaries at start (and implicitly at end+1).
-    
+    Lb = log_boundary_marginal(Eseg, beta, start, end)
+
     Input:
-        Eseg:  segment energy matrix
-        beta:  inverse temperature
-        start: index of first boundary node
-        end:   index of final non-boundary node
+        Eseg - segment energy matrix
+        beta - inverse temperature
+        start, end
 
     Returns:
-        ln(W), where
-        W[i] = marginal weight of i being a boundary in [start, end]
-        Z = W[0] = W[end+1] is the partition function for subsystem [start, end].
-    
+        Lz[i] = sum of statistical weights of all segmentations having i as a
+                segment boundary.
+
     """
-    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(Ecomm, beta, start, end)
-    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(Ecomm, beta, start, end)
+    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(Eseg, beta, start, end)
+    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(Eseg, beta, start, end)
     return Lf + Lb
 
 
-def log_segment_marginal(np.ndarray[np.double_t, ndim=2] Ecomm, double beta):
+@cython.embedsignature(True)
+def log_segment_marginal(np.ndarray[np.double_t, ndim=2] Eseg, double beta):
     """
-    Returns the segment Boltzmann weight matrix.
+    Ls = log_segment_marginal(Eseg, beta)
 
     Input:
-        Eseg:  segment energy matrix
-        beta:  inverse temperature
+        Eseg - segment energy matrix
+        beta - inverse temperature
 
     Returns:
-        ln(W), where
-        W[p,q] = sum of Boltmann weights corresponding to all segmentations
-                 containing the segment [p, q-1]: p and q as boundaries and
-                 no boundaries in between.
-        NOTE: Here, indices correspond to segments via slice representation [p,q)
+        Ls[a,b] = sum of statistical weights of all segmentations containing the
+                  segment [a,b).
+
+    Returns the segment Boltzmann weight matrix.
 
     """
     # NOTE: the diagonal contains the boundary marginal 
     # Interpretation: trivial segments [i,i) are single boundary occurrences.
-    cdef int N = len(Ecomm) - 1 # n nodes
-    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(Ecomm, beta, 0, N)
-    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(Ecomm, beta, 0, N)
+    cdef int N = len(Eseg) - 1 # n nodes
+    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(Eseg, beta, 0, N)
+    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(Eseg, beta, 0, N)
     
     cdef np.ndarray[np.double_t, ndim=2] Lms = np.zeros((N+1, N+1))
     cdef int i, j
     for i in range(N+1):
         for j in range(i, N+1):
-            Lms[i,j] = Lms[j,i] = Lf[i] - beta*Ecomm[i, j] + Lb[j]
+            Lms[i,j] = Lms[j,i] = Lf[i] - beta*Eseg[i, j] + Lb[j]
     
     return Lms
 
 
-def log_boundary_cooccur_marginal(np.ndarray[np.double_t, ndim=2] Ecomm, double beta):
+@cython.embedsignature(True)
+def log_boundary_cooccur_marginal(np.ndarray[np.double_t, ndim=2] Eseg, double beta):
+    """
+    Lbb = log_boundary_cooccur_marginal(Eseg, beta)
+
+    Input:
+        Eseg - segment energy matrix
+        beta - inverse temperature
+
+    Returns:
+        Lbb[i,j] = sum of statistical weights of all segmentations in which
+                   both i and j occur as segment boundaries
+
+    """
     # NOTE: the diagonal contains the boundary marginal (assuming Lz[i,i]==0)
     # Interpretation:  Boundary occurrences co-occur with themselves.
-    cdef int N = len(Ecomm) - 1 #nodes
-    cdef np.ndarray[np.double_t, ndim=2] Lz = log_zmatrix(Ecomm, beta)
+    cdef int N = len(Eseg) - 1 #nodes
+    cdef np.ndarray[np.double_t, ndim=2] Lz = log_zmatrix(Eseg, beta)
      
     cdef np.ndarray[np.double_t, ndim=2] Lmm = np.zeros((N+1,N+1))
     cdef int i, j
@@ -285,11 +385,24 @@ def log_boundary_cooccur_marginal(np.ndarray[np.double_t, ndim=2] Ecomm, double 
     return Lmm
 
 
-def log_segment_cooccur_marginal(np.ndarray[np.double_t, ndim=2] Ecomm, double beta):
+@cython.embedsignature(True)
+def log_segment_cooccur_marginal(np.ndarray[np.double_t, ndim=2] Eseg, double beta):
+    """
+    Lss = log_segment_cooccur_marginal(Eseg, beta)
+
+    Input:
+        Eseg - segment energy matrix
+        beta - inverse temperature
+
+    Returns:
+        Lbb[p,q] = sum of statistical weights of all segmentations in which
+                   p and q occur within the same segment
+
+    """
     # NOTE: the diagonal contains the partition function Z.
     # Interpretation: Each node is always in the same segment as itself.
-    cdef int N = len(Ecomm) - 1
-    cdef np.ndarray[np.double_t, ndim=2] Ls = log_segment_marginal(Ecomm, beta)
+    cdef int N = len(Eseg) - 1
+    cdef np.ndarray[np.double_t, ndim=2] Ls = log_segment_marginal(Eseg, beta)
     cdef double Ls_max = Ls.max()
 
     cdef np.ndarray[np.double_t, ndim=2] Zseg = np.exp(Ls - Ls_max)
