@@ -9,6 +9,7 @@ from scipy.linalg import toeplitz
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+@cython.embedsignature(True)
 cpdef sums_by_segment(
         np.ndarray[np.double_t, ndim=2] A, 
         int offset=1,
@@ -65,6 +66,7 @@ cpdef sums_by_segment(
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+@cython.embedsignature(True)
 cpdef normalized_sums_by_segment(
         np.ndarray[np.double_t, ndim=2] A,
         int offset=1):
@@ -89,10 +91,11 @@ cpdef normalized_sums_by_segment(
     return S
 
 
-# @cython.cdivision(True)
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.nonecheck(False)
+@cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.embedsignature(True)
 cpdef armatus_score(np.ndarray[np.double_t, ndim=2] Sseg, double gamma):
     """
     For each segment:
@@ -125,9 +128,9 @@ cpdef armatus_score(np.ndarray[np.double_t, ndim=2] Sseg, double gamma):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def arrowhead(np.ndarray[np.double_t, ndim=2] A):
+cpdef arrowhead(np.ndarray[np.double_t, ndim=2] A):
     cdef int N = len(A)
-    cdef np.ndarray[np.double_t, ndim=2] R = np.zeros((N,N))
+    cdef np.ndarray[np.double_t, ndim=2] R = np.zeros((N,N), dtype=float)
     cdef int i, d
     for i in range(N):
         for d in range(0, N-i):
@@ -140,9 +143,9 @@ def arrowhead(np.ndarray[np.double_t, ndim=2] A):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def arrowhead_r(np.ndarray[np.double_t, ndim=2] A):
+cpdef arrowhead_r(np.ndarray[np.double_t, ndim=2] A):
     cdef int N = len(A)
-    cdef np.ndarray[np.double_t, ndim=2] R = np.zeros((N,N))
+    cdef np.ndarray[np.double_t, ndim=2] R = np.zeros((N,N), dtype=float)
     cdef int i, d
     for i in range(N):
         for d in range(0, N-i):
@@ -155,6 +158,7 @@ def arrowhead_r(np.ndarray[np.double_t, ndim=2] A):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
+@cython.embedsignature(True)
 def corner_score(np.ndarray[np.double_t, ndim=2] A):
     cdef int N = len(A)
     cdef np.ndarray[np.double_t, ndim=2] R = arrowhead(A)
@@ -175,8 +179,8 @@ def corner_score(np.ndarray[np.double_t, ndim=2] A):
             L[i,j] = L[j,i] = L[i,j-1] + R2[i:k+1, j-1].sum()
     L = np.flipud(np.fliplr(L))
 
-    cdef np.ndarray[np.double_t, ndim=2] norm = toeplitz(np.arange(N+1))
-    return (L-U)/norm
+    #cdef np.ndarray[np.double_t, ndim=2] norm = toeplitz(np.arange(N+1, dtype=float))
+    return (L-U) #/norm
 
 
 def logbins(a, b, pace, N_in=0):
@@ -209,6 +213,7 @@ def logbins(a, b, pace, N_in=0):
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 @cython.wraparound(False)
+@cython.embedsignature(True)
 def diag_mean(A, mask):
     """
     Calculates averages of a contact map as a function of separation
@@ -244,56 +249,7 @@ def diag_mean(A, mask):
         for offset in range(start, end):
             avg[offset] = meanss
 
-            # for j in range(0, N-offset):
-            #     if datamask[offset+j, j] == 1:
-            #         B[offset+j, j] = B[j, offset+j] = meanss
-
     return data
-
-# def arrowhead_l(A):
-#     N = len(A)
-#     R = np.zeros((N,N))
-#     for i in range(N):
-#         for d in range(0, N-i):
-#             denom = (A[i,i-d] + A[i, i+d])
-#             R[i,i+d] = R[i+d,i] = (A[i,i-d] - A[i,i+d])/denom if denom != 0 else 0
-#     return R
-
-
-# def arrowhead_r(A):
-#     N = len(A)
-#     R = np.zeros((N,N))
-#     for i in range(N):
-#         for d in range(0, N-i):
-#             denom = (A[i,i-d] + A[i, i+d])
-#             R[i,i+d] = R[i+d,i] = (A[i,i+d] - A[i,i-d])/denom if denom != 0 else 0
-#     return R
-
-
-# def arrowhead_corner_score(ArrowheadL, ArrowheadR):
-#     N = len(A)
-#     aL = arrowhead_l(A)
-#     aR = arrowhead_r(np.flipud(np.fliplr(A)))
-#     U = np.zeros((N+1,N+1))
-#     for i in xrange(0, N+1):
-#         U[i,0] = 0.0
-#         for j in xrange(i+1, N+1):
-#             k = (i+j)//2
-#             U[i,j] = U[j,i] = U[i,j-1] + aL[i:k+1, j-1].sum()
-#     D = toeplitz(np.r_[1,np.arange(1,N+1)])
-#     self.U = U/D
-#     L = np.zeros((N+1,N+1))
-#     for i in xrange(0, N+1):
-#         L[i,0] = 0.0
-#         for j in xrange(i+1, N+1):
-#             k = (i+j)//2
-#             L[i,j] = L[j,i] = L[i,j-1] + aR[i:k+1, j-1].sum()
-#     L = np.flipud(np.fliplr(L))
-#     self.L = L/D
-#     self.Eseg = -(self.L - self.U)
-
-
-
 
 
 

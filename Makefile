@@ -1,4 +1,4 @@
-BUILDDIR=lavaburst
+BUILDDIR=lavaburst/core
 
 .PHONY: all clean build test install uninstall
 

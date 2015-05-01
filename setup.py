@@ -14,10 +14,10 @@ ext_modules = []
 
 if use_cython:
     ext_modules += [
-        Extension("*", ["lavaburst/*.pyx"], include_dirs=[numpy.get_include()])
+        Extension("*", ["lavaburst/core/*.pyx"], include_dirs=[numpy.get_include()])
     ]
     cmdclass.update({'build_ext': build_ext})
-    ext_modules = cythonize(ext_modules)
+    ext_modules = cythonize(ext_modules) #, annotate=True
 
 setup(
     name='lavaburst',

@@ -172,7 +172,7 @@ def tilt_heatmap(A, n_diags=None, pad=np.nan):
     shape, giving rise to a "tilted" half matrix.
 
     This is basically a hack to visualize a matrix rotated 45 degrees to the
-    left, since matplotlib can't rotate images.
+    left, since AFAIK matplotlib can't rotate pixel images.
 
     Input:
         A   - symmetric N x N matrix
@@ -182,11 +182,11 @@ def tilt_heatmap(A, n_diags=None, pad=np.nan):
         T - N x N "tilted" version of upper triangle of A
 
     Note that this transformation distorts the matrix when viewed with equal 
-    aspect. When using imshow/matshow, set the aspect ratio to 1/sqrt(2).
+    aspect. When using imshow/matshow, set the aspect ratio to sqrt(.25).
 
         >>> f = plt.figure()
         >>> ax = f.add_subplot(111)
-        >>> ax.matshow(tilt_heatmap(A), aspect=1/np.sqrt(2), origin='lower')
+        >>> ax.matshow(tilt_heatmap(A), aspect=np.sqrt(.25), origin='lower')
 
     """
     N = len(A)
@@ -233,6 +233,24 @@ def checkerboard(labels, lower=True, upper=False, offset=0):
     return np.ma.masked_where(np.isnan(mat), mat) 
 
 
+def blocks_outline(segments):
+    # paints boxes starting at upper left corner, counter-clockwise (assuming origin=upper) and back 
+    # (will also trace diagonal line as it moves to the next box)
+    x, y = [], []
+    for lo, hi in segments:
+        x.extend([lo,lo,hi,hi,lo])
+        y.extend([lo,hi,hi,lo,lo])
+    return np.array(x)-0.5, np.array(y)-0.5
+
+
+def triangle_outline(segments):
+    x, y = [], []
+    for lo, hi in segments:
+        x.extend([lo,hi,hi,lo])
+        y.extend([lo,lo,hi,lo])
+    return np.array(x)-0.5, np.array(y)-0.5
+
+
 def reveal_tril(A, k=0):
     E = np.ones(A.shape)
     return np.ma.masked_where(np.logical_not(np.tril(E, -k)), A)
@@ -241,6 +259,73 @@ def reveal_tril(A, k=0):
 def reveal_triu(A, k=0):
     E = np.ones(A.shape)
     return np.ma.masked_where(np.logical_not(np.triu(E, k)), A)
+
+
+def contactbias(A, window=200):
+    N = len(A)
+    di = np.zeros(N)
+
+    for i in range(N):
+        w = max(0, min(window, N-i))
+        di[i] = (A[i, i:(i+w)+1].sum() - A[i, (i-w):i+1].sum()) / A[i, (i-w):(i+w)+1].sum()
+
+    return di
+
+
+def directionality_chisquare(A, window=200):
+    N = len(A)
+    di = np.zeros(N)
+
+    for i in range(N):
+        w = min(window, N-i)
+        b, a = A[i, i:(i+w)+1].sum(), A[i, (i-w):i+1].sum()
+        e = (a + b)/2.0
+        di[i] = np.sign(b - a) * ( (a-e)**2 + (b-e)**2 )/e
+
+    return di
+
+
+def where_diag(N, diag):
+    if diag >= 0:
+        diag_indices = np.c_[np.arange(0, N-diag), np.arange(diag, N)]
+    else:
+        diag_indices = np.c_[np.arange(-diag, N), np.arange(0, N+diag)]   
+    return diag_indices[:, 0], diag_indices[:, 1]
+
+
+def sliding_window(w, *arrays):
+    n = len(arrays[0])
+    for i in range(0, n-w+1):
+        yield tuple(x[i:i+w] for x in arrays)
+
+
+def insul(A, extent=200):
+    N = len(A)
+    score = np.zeros(N)
+    dscore = np.zeros(N)
+
+    for diag in range(extent):
+        for i, (qi, qj) in enumerate(
+                sliding_window(diag+1, *where_diag(N, diag))):
+            dscore[i+diag] = A[qi, qj].mean()
+        score[diag:-diag] += dscore[diag:-diag] #(dscore[diag:-diag] - score[diag:-diag]) / diag
+
+    return score
+
+
+def insul_diamond(A, extent=200):
+    N = len(A)
+    starts = np.arange(0, N-extent)
+    ends = np.arange(extent, N)
+
+    score = np.zeros(N)
+    for i in range(0, N):
+        w = min(extent, i, N-i)
+        score[i] = A[i-w:i, i:i+w].sum()
+    score /= score.mean()
+
+    return score
+
 
 
 # @cython.boundscheck(False)

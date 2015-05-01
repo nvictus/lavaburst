@@ -5,49 +5,103 @@ cimport numpy as np
 from libc.math cimport log, exp, abs
 
 
-@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cpdef max_sum(np.ndarray[np.double_t, ndim=2] score):
+@cython.embedsignature(True)
+cpdef max_sum(np.ndarray[np.double_t, ndim=2] S):
     """
-    opt, optk = max_sum(S)
-
     Perform max-sum algorithm (longest path) dynamic program on segmentation 
     path graph with score matrix S.
 
+    Input:
+        S  -  score matrix (symmetric 2D numpy array)
+
     Returns:
         opt[i]  - optimal score of path from 0..i
-        optk[i] - first predecessor node on optimal path from 0..i
+        pred[i] - first predecessor node on optimal path from 0..i
 
     """
-    cdef int N = len(score) - 1
+    cdef int N = len(S) - 1
     cdef np.ndarray[np.double_t, ndim=1] opt = np.zeros(N+1, dtype=float)
-    cdef np.ndarray[np.int_t, ndim=1] optk = np.zeros(N+1, dtype=int)
+    cdef np.ndarray[np.int_t, ndim=1] pred = np.zeros(N+1, dtype=int)
 
     cdef int i, k
     cdef double s
     opt[0] = 0.0
     for i in range(1, N+1):
         opt[i] = -np.inf
-        optk[i] = i-1
+        pred[i] = i-1
         for k in range(0, i):
-            s = opt[k] + score[k, i]
+            s = opt[k] + S[k, i]
             if s > opt[i]:
                 opt[i] = s
-                optk[i] = k
+                pred[i] = k
 
-    return opt, optk
+    return opt, pred
 
 
-@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cpdef get_path(np.ndarray[np.double_t, ndim=1] opt, np.ndarray[np.int_t, ndim=1] optk):
+@cython.embedsignature(True)
+cpdef max_sum_with_gaps(np.ndarray[np.double_t, ndim=2] S, 
+                      double go, double ge, double gc):
     """
-    path = get_path(opt, optk)
+    Perform gapped max-sum algorithm (longest path) dynamic program on 
+    segmentation path graph with score matrix S.
 
+    Input:
+        S  -  score matrix (symmetric 2D numpy array)
+        go - gap opening score
+        ge - gap extension score
+        gc - gap closure score
+
+    Returns:
+        opt[i,:]  - optimal score of path from 0..i 
+                    ending in segment/gap boundary
+        pred[i,:] - first predecessor node on optimal path from 0..i
+                    ending in segment/gap boundary
+
+    """
+    cdef int N = len(S) - 1
+    cdef np.ndarray[np.double_t, ndim=2] opt  = np.zeros((N+1,2), dtype=float)
+    cdef np.ndarray[np.double_t, ndim=2] pred = np.zeros((N+1,2), dtype=float)
+    
+    cdef int i, k
+    cdef double s
+    opt[0, 0] = 0.0
+    opt[0, 1] = go
+    for i in range(1, N+1):
+        # consider segment boundary predecessors
+        #  - end of another segment
+        #  - end of a gap
+        for k in range(0, i):
+            s = opt[k, 0] + S[k, i]
+            if s > opt[i, 0]:
+                opt[i, 0] = s
+                pred[i, 0] = k
+        s = opt[i-1, 0] + gc
+        if s > opt[i, 0]:
+            opt[i, 0] = s
+            pred[i, 0] = i-1
+
+        # consider gap boundary predecessors
+        #  - gap opening
+        #  - gap extension
+        s = max(opt[i-1, 0] + go, opt[i-1, 1] + ge)
+        opt[i, 1] = s
+        pred[i, 1] = i-1
+        
+    return opt, pred
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.embedsignature(True)
+cpdef get_path(np.ndarray[np.double_t, ndim=1] opt, np.ndarray[np.int_t, ndim=1] pred):
+    """
     Backtrack over predecessor nodes to get the optimal path from max-sum.
 
     Returns:
@@ -55,12 +109,51 @@ cpdef get_path(np.ndarray[np.double_t, ndim=1] opt, np.ndarray[np.int_t, ndim=1]
 
     """
     cdef int N = len(opt) - 1
-    cdef np.ndarray[np.int_t, ndim=1] path = np.zeros(N, dtype=int)
-    cdef int j = 0
+    cdef np.ndarray[np.int_t, ndim=1] path = np.zeros(N+1, dtype=int)
+    cdef int i, j 
+    j = 0
     i = path[j] = N
     j += 1
     while i > 0:
-        i = path[j] = optk[i]
+        i = path[j] = pred[i]
+        j += 1
+
+    return path[:j][::-1]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+@cython.embedsignature(True)
+cpdef get_path_with_gaps(
+        np.ndarray[np.double_t, ndim=2] opt, 
+        np.ndarray[np.int_t, ndim=2] pred):
+    """
+    Backtrack over predecessor nodes to get the optimal path from gapped max-sum.
+
+    Returns:
+        path (array) - optimal path of nodes from 0..N
+
+    """
+    cdef int N = opt.shape[0] - 1
+    cdef np.ndarray[np.int_t, ndim=1] path = np.zeros(N+1, dtype=int)
+    cdef int i, j 
+    j = 0
+    
+    if opt[-1, 0] > opt[-1, 1]:
+        path[j] = N
+    else:
+        path[j] = -N
+    i = N
+    j += 1
+    
+    while i > 0:
+        if opt[i, 0] > opt[i, 1]:
+            path[j] = pred[i, 0]
+            i = pred[i, 0]
+        else:
+            path[j] = -pred[i, 1]
+            i = pred[i, 1]
         j += 1
 
     return path[:j][::-1]
@@ -140,7 +233,6 @@ def consensus_segments(list segments, weights):
 # logZf[N-1] = log( exp(logZf[0]-beta*E[0,N-1]) + exp(logZf[1]-beta*E[1,N-1]) + ... + exp(logZf[N-2]-beta*E[N-2,N-1]) )
 # logZf[N]   = log( exp(logZf[0]-beta*E[0,N]) + exp(logZf[1]-beta*E[1,N]) + ... + exp(logZf[N-1]-beta*E[N-1,N]) )
 ###
-@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 @cython.wraparound(False)
@@ -152,8 +244,6 @@ cpdef np.ndarray[np.double_t, ndim=1] log_forward(
         int end,
         int maxsize=-1):
     """
-    Lf = log_forward(Eseg, beta, start, end)
-
     Forward algorithm.
 
     Input:
@@ -173,27 +263,20 @@ cpdef np.ndarray[np.double_t, ndim=1] log_forward(
     cdef int n = end - start
     cdef np.ndarray[np.double_t, ndim=1] Lfwd = np.zeros(n+1, dtype=float)
     cdef np.ndarray[np.double_t, ndim=1] a = np.zeros(n+1, dtype=float) 
-    cdef int t, k, ms
-    cdef double a_max, a_min, c
+    cdef int t, k
+    cdef double a_max
 
     Lfwd[0] = 0.0
     for t in range(1, n+1):
         a_max = 0.0
-        a_min = 0.0
-        ms = max(t-maxsize, 0)
-        for k in range(ms, t):
+        for k in range(max(t-maxsize, 0), t):
             a[k] = Lfwd[k] - beta*Eseg[start+k, start+t]
             if a[k] > a_max:
                 a_max = a[k]
-        #     elif a[k] < a_min:
-        #         a_min = a[k]
 
-        c = a_max #if a_max > abs(a_min) else a_min
-        Lfwd[t] = c + log(np.exp(a[:t] - c).sum())
+        Lfwd[t] = a_max + log(np.exp(a[:t] - a_max).sum())
     
     return Lfwd
-
-
 
 
 ###
@@ -209,7 +292,6 @@ cpdef np.ndarray[np.double_t, ndim=1] log_forward(
 # ...
 # logZb[0] = log( exp(logZb[N]-beta*E[0,N]) + exp(logZb[N-1]-beta*E[0,N-1]) ... + exp(logZb[1]-beta*E[0,1]) )
 ###
-@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.nonecheck(False)
 @cython.wraparound(False)
@@ -221,8 +303,6 @@ cpdef np.ndarray[np.double_t, ndim=1] log_backward(
         int end,
         int maxsize=-1):
     """
-    Lb = log_backward(Eseg, beta, start, end)
-
     Backward algorithm.
 
     Input:
@@ -242,23 +322,100 @@ cpdef np.ndarray[np.double_t, ndim=1] log_backward(
     cdef int n = end - start
     cdef np.ndarray[np.double_t, ndim=1] Lbwd = np.zeros(n+1, dtype=float)
     cdef np.ndarray[np.double_t, ndim=1] a = np.zeros(n+1, dtype=float)
-    cdef int k, t, ms
-    cdef double a_max, a_min, c
+    cdef int k, t
+    cdef double a_max
     
     Lbwd[n] = 0.0
     for t in range(1, n+1):
         a_max = 0.0
-        a_min = 0.0
-        ms = max(t-maxsize, 0)
-        for k in range(ms, t):
+        for k in range(max(t-maxsize, 0), t):
             a[k] = Lbwd[n-k] - beta*Eseg[end-t, end-k]
             if a[k] > a_max:
                 a_max = a[k]
-            # elif a[k] < a_min:
-            #     a_min = a[k]
 
-        c = a_max #if a_max > abs(a_min) else a_min
         Lbwd[n-t] = a_max + log(np.exp(a[:t] - a_max).sum())
+
+    return Lbwd
+
+
+@cython.boundscheck(False)
+@cython.nonecheck(False)
+@cython.wraparound(False)
+@cython.embedsignature(True)
+def log_forward_with_gaps(
+        np.ndarray[np.double_t, ndim=2] Eseg, 
+        double beta, double go, double ge, double gc, int maxsize=-1):
+    cdef int N = len(Eseg) - 1 # number of nodes
+    if maxsize == -1:
+        maxsize = N
+
+    cdef np.ndarray[np.double_t, ndim=2] Lfwd = np.zeros((N+1, 2), dtype=float)
+    cdef np.ndarray[np.double_t, ndim=1] a = np.zeros(N+1, dtype=float)
+    cdef np.ndarray[np.double_t, ndim=1] b = np.zeros(2, dtype=float)
+
+    cdef int t, k
+    cdef double a_max, b_max, c
+    Lfwd[0, 0] = 0.0
+    Lfwd[0, 1] = beta*go
+    for t in range(1, N+1):
+        a_max = 0.0
+        # segment to segment
+        for k in range(max(t - maxsize, 0), t):
+            a[k] = Lfwd[k, 0] - beta*Eseg[k, t]
+            if np.abs(a[k]) > a_max:
+                a_max = a[k]
+        # gap close
+        c = Lfwd[t-1, 1] + beta*gc
+        if c > a_max:
+            a_max = c
+        # gap open, gap extend
+        b[0] = Lfwd[t-1, 0] + beta*go
+        b[1] = Lfwd[t-1, 1] + beta*ge
+        b_max = b.max()
+
+        Lfwd[t, 0] = a_max + log(np.exp(a[:t] - a_max).sum() + np.exp(c - a_max))
+        Lfwd[t, 1] = b_max + log(np.exp(b - b_max).sum())
+                    
+    return Lfwd
+
+
+@cython.boundscheck(False)
+@cython.nonecheck(False)
+@cython.wraparound(False)
+@cython.embedsignature(True)
+def log_backward_with_gaps(
+        np.ndarray[np.double_t, ndim=2] Eseg, 
+        double beta, double go, double ge, double gc, int maxsize=-1):
+    cdef int N = len(Eseg) - 1
+    if maxsize == -1:
+        maxsize = N
+
+    cdef np.ndarray[np.double_t, ndim=2] Lbwd = np.zeros((N+1, 2), dtype=float)
+    cdef np.ndarray[np.double_t, ndim=1] a = np.zeros(N+1, dtype=float)
+    cdef np.ndarray[np.double_t, ndim=1] b = np.zeros(2, dtype=float)
+    
+    cdef int t, k
+    cdef double a_max, b_max, c
+    Lbwd[N, 0] = 0.0
+    Lbwd[N, 1] = 0.0
+    for t in range(1, N+1):
+        a_max = 0.0
+        # segment to segment
+        for k in range(max(t - maxsize, 0), t):
+            a[k] = Lbwd[N-k, 0] - beta*Eseg[N-t, N-k]
+            if np.abs(a[k]) > a_max:
+                a_max = a[k]
+        # gap open
+        c = Lbwd[N-(t-1), 1] + beta*go
+        if c > a_max:
+            a_max = c
+        # gap close, gap extend
+        b[0] = Lbwd[N-(t-1), 0] + beta*gc
+        b[1] = Lbwd[N-(t-1), 1] + beta*ge
+        b_max = b.max()
+
+        Lbwd[N-t, 0] = a_max + log(np.exp(a[:t] - a_max).sum() + np.exp(c - a_max))
+        Lbwd[N-t, 1] = b_max + log(np.exp(b - b_max).sum())
 
     return Lbwd
 
@@ -338,8 +495,6 @@ def log_segment_marginal(np.ndarray[np.double_t, ndim=2] Eseg, double beta):
     Returns:
         Ls[a,b] = sum of statistical weights of all segmentations containing the
                   segment [a,b).
-
-    Returns the segment Boltzmann weight matrix.
 
     """
     # NOTE: the diagonal contains the boundary marginal 
