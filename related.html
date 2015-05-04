@@ -1,0 +1,218 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Related Methodologies &mdash; lavaburst 0.1.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="lavaburst 0.1.1 documentation" href="index.html"/>
+        <link rel="next" title="Extensions" href="extend.html"/>
+        <link rel="prev" title="Examples" href="examples.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> lavaburst</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#a-probabilistic-segmentation-model-for-genomic-interaction-maps">A probabilistic segmentation model for genomic interaction maps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#what-s-in-a-domain">What&#8217;s in a domain?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#finding-communities-in-a-haystack">Finding communities in a haystack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#restrict-the-search-space">Restrict the search space</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#the-segmentation-path-graph">The segmentation path graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#a-statistical-ensemble">A statistical ensemble</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algo.html">Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#optimal-segmentation">Optimal segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#sampling">Sampling</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scoring.html">Scoring systems</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#extensivity">Extensivity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#log-odds-scores">Log-odds scores</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#potts-energy-model">Potts energy model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#other-scoring-functions">Other scoring functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Related Methodologies</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#network-community-detection">Network community detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sequence-alignment">Sequence alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hidden-markov-models">Hidden Markov Models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extend.html">Extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#gapped-and-local-segmentation">Gapped and local segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#emission-probabilities-and-inference">Emission probabilities and inference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">lavaburst</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Related Methodologies</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/related.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="related-methodologies">
+<h1>Related Methodologies<a class="headerlink" href="#related-methodologies" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="network-community-detection">
+<h2>Network community detection<a class="headerlink" href="#network-community-detection" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="sequence-alignment">
+<h2>Sequence alignment<a class="headerlink" href="#sequence-alignment" title="Permalink to this headline">¶</a></h2>
+<p>Karlin-Altschul statistics.</p>
+<p>Probabilistic alignment theory.</p>
+<p>Well-definedness.</p>
+</div>
+<div class="section" id="hidden-markov-models">
+<h2>Hidden Markov Models<a class="headerlink" href="#hidden-markov-models" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="extend.html" class="btn btn-neutral float-right" title="Extensions"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="examples.html" class="btn btn-neutral" title="Examples"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Nezar Abdennur.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

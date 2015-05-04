@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Theory &mdash; lavaburst 0.1.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="lavaburst 0.1.1 documentation" href="index.html"/>
+        <link rel="next" title="Algorithms" href="algo.html"/>
+        <link rel="prev" title="Motivation" href="motivation.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> lavaburst</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#a-probabilistic-segmentation-model-for-genomic-interaction-maps">A probabilistic segmentation model for genomic interaction maps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#what-s-in-a-domain">What&#8217;s in a domain?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#finding-communities-in-a-haystack">Finding communities in a haystack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#restrict-the-search-space">Restrict the search space</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-segmentation-path-graph">The segmentation path graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#a-statistical-ensemble">A statistical ensemble</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algo.html">Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#optimal-segmentation">Optimal segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#sampling">Sampling</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scoring.html">Scoring systems</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#extensivity">Extensivity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#log-odds-scores">Log-odds scores</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#potts-energy-model">Potts energy model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#other-scoring-functions">Other scoring functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Methodologies</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="related.html#network-community-detection">Network community detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#sequence-alignment">Sequence alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#hidden-markov-models">Hidden Markov Models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extend.html">Extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#gapped-and-local-segmentation">Gapped and local segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#emission-probabilities-and-inference">Emission probabilities and inference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">lavaburst</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Theory</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/theory.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="theory">
+<h1>Theory<a class="headerlink" href="#theory" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-segmentation-path-graph">
+<h2>The segmentation path graph<a class="headerlink" href="#the-segmentation-path-graph" title="Permalink to this headline">¶</a></h2>
+<p>To simplify the logic of handling intervals, it is common practice in
+sequence analysis to use a 0-based coordinate system that labels
+individual nucleotides, or ranges of nucleotides, by the coordinates
+that flank them. Similarly, we define here a 0-based coordinate system
+for genomic bins that labels individual bins by their edges (<a class="reference internal" href="#figure-3"><em>Fig. 3</em></a>).</p>
+<div class="figure align-center" id="figure-3" style="width: 75%">
+<img alt="Genomic coordinate systems" src="_images/theory-0-vs-1-based.png" />
+<p class="caption">Fig. 3</p>
+<div class="legend">
+Top: Coordinate systems for a binned genomic region: segmentations are unambiguously expressed in
+a 0-based or &#8220;edge-based&#8221; representation that designates which bin edges are the boundaries
+between segments of genomic bins. Bottom: example segmentation (red lines) expressed in
+binary notation.</div>
+</div>
+<p>For a symmetric genomic interaction heatmap (the same coordinates on
+both axes), we have an ordered list of contiguous genomic bins, each of
+which is an interval of one or more bases, represented by the following
+bin edge labels:</p>
+<div class="math">
+\[V = (0,1,2,\ldots, N).\]</div>
+<p>We define a <strong>segment</strong> as a set of <em>consecutive bins</em> according to the
+sequence <span class="math">\(V\)</span>.</p>
+<p>We define a <strong>segmentation</strong> <span class="math">\(s\)</span> as a collection of
+<em>non-overlapping segments</em> that covers <span class="math">\(V\)</span> (i.e., no repeated
+bins, no gaps).</p>
+<p>We denote <span class="math">\(S\)</span> the <strong>state space</strong> of all segmentations over
+<span class="math">\(V\)</span>.</p>
+<p>In this coordinate system, any segment can be represented as a half-open
+interval, denoted by pairs <span class="math">\([a,b)\)</span>, where <span class="math">\(a \lt b\)</span>. For
+example, the first bin is denoted <span class="math">\([0,1)\)</span>, the segment spanning
+the first five bins is denoted <span class="math">\([0,5)\)</span>. We can represent
+segmentations in several ways:</p>
+<ol class="arabic simple">
+<li>as sets of adjacent half-open intervals (e.g.,
+<span class="math">\(\\{ [0,3), [3,5), [5,8) \\}\)</span>)</li>
+<li>as bit strings of length <span class="math">\(N+1\)</span>, where the bit values specify
+whether or not a boundary exists between two bins (1=boundary,
+0=non-boundary). Under this convention, the starting and final bits
+are always equal to 1. (e.g., 100101001 )</li>
+<li>as a path along the segmentation graph (see below)</li>
+</ol>
+<p>The bit string representation makes it clear that the state space has
+size <span class="math">\(\|S\| = 2^{N-1}\)</span>. We can represent the entire state space
+<span class="math">\(S\)</span> as a directed acyclic graph we call the <strong>segmentation graph</strong>
+(<a class="reference internal" href="#figure-4"><em>Fig. 4</em></a>). The nodes of the segmentation graph correspond
+to the edges of genomic bins and all of the arcs point in the direction
+of increasing genomic coordinate (from left to right as depicted in
+<a class="reference internal" href="#figure-4"><em>Fig. 4</em></a>). Each arc corresponds to a unique genomic segment.</p>
+<div class="figure align-center" id="figure-4" style="width: 75%">
+<img alt="Segmentation path graph" src="_images/theory-seg-graph.png" />
+<p class="caption">Fig. 4</p>
+<div class="legend">
+The segmentation path graph. The nodes correspond to genomic bin edges.</div>
+</div>
+<p>In this graphical representation, any <strong>segmentation</strong> <span class="math">\(s\)</span> of the
+genomic bins can be mapped uniquely to a <strong>path</strong> on the segmentation
+graph starting at the left-most boundary (source) node and ending at the
+the right-most boundary (sink) node, shown in grey. The nodes visited
+are the segment boundaries, i.e. the 1s in the bit string representation
+of the segmentation.</p>
+<div class="figure align-center" id="figure-5" style="width: 75%">
+<img alt="Example path on the segmentation graph" src="_images/theory-seg-graph-path.png" />
+<p class="caption">Fig. 5</p>
+<div class="legend">
+Nodes can take on states 0 (non-boundary) or 1 (segment boundary). The boundary
+nodes are the ones visited along a path from the source node to the sink node.</div>
+</div>
+</div>
+<div class="section" id="a-statistical-ensemble">
+<h2>A statistical ensemble<a class="headerlink" href="#a-statistical-ensemble" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s assume we can associate every possible segment in <span class="math">\(V\)</span> with a
+score or <strong>energy</strong> <span class="math">\(E(a,b)\)</span> that tells us how &#8220;good&#8221; a segment it
+is. When thinking in terms of energies &#8211; as opposed to scores &#8211; lower
+means &#8220;better&#8221;.</p>
+<p>If each segment <span class="math">\([a,b)\)</span> making up a segmentation <span class="math">\(s\)</span>
+provides an independent energetic contribution, we can define a
+Hamiltonian for this system as the sum of energetic contributions:</p>
+<div class="math" id="equation-hamiltonian">
+<span class="eqno">(1)</span>\[H(s) = \displaystyle\sum_{[a,b) \in s} { E(a,b) }\]</div>
+<p>Having a Hamiltonian formulation allows us to construct a probabilistic
+model for the set of all segmentations using the framework of
+statistical mechanics. We model segmentations in the bit string
+representation as a thermal system in equilibrium with a heat bath. This
+statistical ensemble is called the <em>canonical ensemble</em>, where states
+(segmentations) obey the Boltzmann distribution</p>
+<div class="math" id="equation-boltzmann">
+<span class="eqno">(2)</span>\[p(s) = \frac{1}{Z} e^{-\beta H(s)},\]</div>
+<p>where the normalization term <span class="math">\(Z\)</span></p>
+<div class="math" id="equation-paritition">
+<span class="eqno">(3)</span>\[Z(\beta) = \sum_{s \in S} { e^{-\beta H(s)} } ,\]</div>
+<p>is conventionally called the <em>partition function</em>, and <span class="math">\(\beta\)</span> is
+the inverse temperature with units on the energy scale.</p>
+<p>Notable properties of this model:</p>
+<ol class="arabic simple">
+<li>The total energy of a segmentation is the <em>sum</em> of the energies of
+its segments <a href="#equation-hamiltonian">(1)</a>. Its statistical (Boltzmann) weight in the ensemble
+is given by <span class="math">\(e^{-\beta H(s)}\)</span>.</li>
+<li>The statistical weight of a segmentation is also the <em>product</em> of the
+Boltzmann weights of its segments, <span class="math">\(e^{-\beta E(a,b)}\)</span>.</li>
+</ol>
+<p>Essentially, we are treating the occurrences of <em>non-overlapping segments
+as statistically independent</em>. This assumption allows us to represent the
+ensemble by assigning arc weights to the segmentation graph. This
+representation will illuminate efficient methods for obtaining exact
+solutions for:</p>
+<ul class="simple">
+<li>the maximum probability segmentation</li>
+<li>the marginal probability for specific boundaries to occur</li>
+<li>the marginal probability for specific segments to occur</li>
+<li>marginal co-occurrence probabilities of specific nodes in either
+state (0 or 1)</li>
+<li>independent samples from the ensemble</li>
+</ul>
+<p>Depending on the algorithm, the weight we assign to the arc connecting <span class="math">\(a\)</span>
+and <span class="math">\(b\)</span> is one of</p>
+<ol class="arabic simple">
+<li>segment energy <span class="math">\(E(a,b)\)</span>. The total energy of a segmentation
+<span class="math">\(s\)</span> is then the sum of the arc weights along its path in the
+segmentation graph.</li>
+<li>segment statistical weight <span class="math">\(e^{-\beta E(a,b)}\)</span>. The statistical
+weight of a segmentation <span class="math">\(s\)</span> is then the product of the arc weights
+along its path in the segmentation graph.</li>
+</ol>
+<p>The algorithms described below apply to any segment scoring function
+that satisfies <a href="#equation-boltzmann">(2)</a>. We will explore the results for a segment version of
+the Potts energy model on Hi-C data.</p>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="algo.html" class="btn btn-neutral float-right" title="Algorithms"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="motivation.html" class="btn btn-neutral" title="Motivation"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Nezar Abdennur.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

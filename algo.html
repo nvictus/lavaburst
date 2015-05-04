@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Algorithms &mdash; lavaburst 0.1.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="lavaburst 0.1.1 documentation" href="index.html"/>
+        <link rel="next" title="Scoring systems" href="scoring.html"/>
+        <link rel="prev" title="Theory" href="theory.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> lavaburst</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#a-probabilistic-segmentation-model-for-genomic-interaction-maps">A probabilistic segmentation model for genomic interaction maps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#what-s-in-a-domain">What&#8217;s in a domain?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#finding-communities-in-a-haystack">Finding communities in a haystack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#restrict-the-search-space">Restrict the search space</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#the-segmentation-path-graph">The segmentation path graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#a-statistical-ensemble">A statistical ensemble</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#optimal-segmentation">Optimal segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sampling">Sampling</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scoring.html">Scoring systems</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#extensivity">Extensivity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#log-odds-scores">Log-odds scores</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#potts-energy-model">Potts energy model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#other-scoring-functions">Other scoring functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Methodologies</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="related.html#network-community-detection">Network community detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#sequence-alignment">Sequence alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#hidden-markov-models">Hidden Markov Models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extend.html">Extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#gapped-and-local-segmentation">Gapped and local segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#emission-probabilities-and-inference">Emission probabilities and inference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">lavaburst</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Algorithms</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/algo.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="algorithms">
+<h1>Algorithms<a class="headerlink" href="#algorithms" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="optimal-segmentation">
+<h2>Optimal segmentation<a class="headerlink" href="#optimal-segmentation" title="Permalink to this headline">¶</a></h2>
+<p>The most probable segmentation is the one that has the greatest (log)
+likelihood, or equivalently, is the lowest energy configuration of our
+system (the <em>ground state</em>). If we place the segment energies on the
+edges of the segmentation graph, and <em>sum the weights</em> along any given
+path from source to sink, then this becomes a straightforward case of
+<strong>finding the shortest (longest) path</strong> on this directed acyclic graph.</p>
+<div class="math">
+\[s_{\textrm{opt}} = \arg\!\max_{s \in S} \left({ - \displaystyle\sum_{[i,j) \in s} E(i,j)}\right)\]</div>
+<p>The optimal segmentation can be found in <span class="math">\(O(N^2)\)</span> time by dynamic
+programming [Fillipova et al].</p>
+<div class="math">
+\[\begin{split}&amp; H_0 = 0 \\
+&amp; H_i = \min_{0 \le k \lt i} \{ H_k + E(k,i-1) \}\end{split}\]</div>
+<p>In the graphical models terminology, this algorithm goes by
+the name <em>max sum</em>. It can be further optimized (linearly bounded) if a
+maximum segment length is imposed.</p>
+</div>
+<div class="section" id="marginal-probabilities">
+<h2>Marginal probabilities<a class="headerlink" href="#marginal-probabilities" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sub-partition-functions">
+<h3>Sub-partition functions<a class="headerlink" href="#sub-partition-functions" title="Permalink to this headline">¶</a></h3>
+<p>Now, if we place the segment statistical weights on the edges of the
+segmentation graph and take the <em>product of weights</em> along any given
+path from source to sink, then we can obtain the partition function
+<span class="math">\(Z(\beta)\)</span> by <strong>summing over all paths</strong> starting at node
+<span class="math">\(0\)</span> and ending at node <span class="math">\(N\)</span>. Furthermore, we can consider
+segmentation &#8220;subsystems&#8221; spanning nodes <span class="math">\(i\)</span> through <span class="math">\(j\)</span>
+(<span class="math">\(i &lt; j\)</span>) and similarly compute the sub-partition function
+<span class="math">\(Z_{i,j}\)</span> by summing over paths in that subsystem (see <a class="reference internal" href="#figure-6"><em>Fig. 6</em></a>, <a class="reference internal" href="#figure-7"><em>Fig. 7</em></a>). The full system partition function <span class="math">\(Z\)</span> is
+equivalent to <span class="math">\(Z_{0,N}\)</span>. We have the following recursion
+relations:</p>
+<p>Forward sub-partition functions:</p>
+<div class="math">
+\[\begin{split}&amp; Z_{0,0} \equiv 1, \\
+&amp; Z_{0,t} = \displaystyle\sum_{k=0}^t Z_{0,k} e^{-\beta E(k,t)} \; \forall t \in \{1, \ldots, N \},\end{split}\]</div>
+<p>Backward sub-partition functions:</p>
+<div class="math">
+\[\begin{split}&amp; Z_{N,N} \equiv 1, \\
+&amp; Z_{N-t,N} = \displaystyle\sum_{k=0}^t Z_{N-k,N} e^{-\beta E(N-t,N-k)} \; \forall t \in \{1, \ldots, N \}.\end{split}\]</div>
+<p>This forms the basis of a dynamic programming algorithm that goes by
+several names: <em>sum-product</em>, forward-backward, belief-propagation, and
+others.</p>
+</div>
+<div class="section" id="marginal-boundary-probabilities">
+<h3>Marginal boundary probabilities<a class="headerlink" href="#marginal-boundary-probabilities" title="Permalink to this headline">¶</a></h3>
+<p>With these forward and backward statistical weight sums, the marginal
+probability of each node being a boundary is obtained from</p>
+<div class="math">
+\[p(x_i = 1) = \frac{Z_{0,i} Z_{i,N}}{Z_{0,N}} .\]</div>
+<div class="figure align-center" id="figure-6" style="width: 50%">
+<img alt="_images/algo-b_marginal.png" src="_images/algo-b_marginal.png" />
+<p class="caption">Fig. 6</p>
+<div class="legend">
+To get the marginal probability of node <span class="math">\(x_i\)</span> being a boundary,
+we need to sum over all paths that pass through it. This conditioning reduces
+the original ensemble to two isolated subsystems, &#8220;forward&#8221; (green) and &#8220;backward&#8221; (red).</div>
+</div>
+<p>Hence, although the number of segmentations is exponential in the number
+of nodes, it is possible to compute the partition function and marginal
+boundary probabilities in <span class="math">\(O(N^2)\)</span> time.</p>
+<p>One can go further and compute the entire set of <span class="math">\(Z_{ij}\)</span> in
+<span class="math">\(O(N^3)\)</span> and obtain co-occurrence probabilities for all pairs of
+nodes. The marginal probability of two nodes co-occurring as segment
+boundaries is given by</p>
+<div class="math">
+\[p(x_i = 1, x_j = 1) = \frac{Z_{0,i} Z_{i,j} Z_{j,N}} {Z_{0,N}}\]</div>
+<div class="figure align-center" id="figure-7" style="width: 50%">
+<img alt="_images/algo-bb_marginal.png" src="_images/algo-bb_marginal.png" />
+<p class="caption">Fig. 7</p>
+<div class="legend">
+The subensemble conditioned on two nodes <span class="math">\(x_i\)</span> and <span class="math">\(x_j\)</span> both being boundaries splits the
+system into three isolated subsystems.</div>
+</div>
+<p>This formula can be generalized to any number of boundaries.</p>
+</div>
+<div class="section" id="marginal-segment-probabilities">
+<h3>Marginal segment probabilities<a class="headerlink" href="#marginal-segment-probabilities" title="Permalink to this headline">¶</a></h3>
+<p>We can make use of the forward and backward sub-partition functions to
+efficiently compute two other quantities of interest.</p>
+<p>The marginal probability of the occurrence of a specific segment
+<span class="math">\([i,j)\)</span> is given by</p>
+<div class="math">
+\[p(x_i = 1, x_j = 1, x_k = 0 \textrm{ for } i \lt k \lt j) = \frac{Z_{0,i} e^{-\beta E(i,j)} Z_{j,N}} {Z_{0,N}}\]</div>
+<div class="figure align-center" id="figure-8" style="width: 50%">
+<img alt="_images/algo-s_marginal.png" src="_images/algo-s_marginal.png" />
+<p class="caption">Fig. 8</p>
+<div class="legend">
+Conditioning the segmentation ensemble on the occurrence of a specific segment (red line)
+reduces it to a combination of two isolated subsystems connected by a single arc.</div>
+</div>
+<p>With the forward and backward statistical weights computed as in the previous section, we
+can further apply dynamic programming to sum up all paths such that
+<span class="math">\(i\)</span>th and <span class="math">\(j\)</span>th genomic bin <em>co-occur in a common
+segment</em>. By computing this for all pairs of bins, the resulting
+marginal segment co-occurrence matrix gives a representation of the
+ensemble that is easy to compare visually to the original Hi-C matrix.
+The entire procedure does not exceed <span class="math">\(O(N^2)\)</span>.</p>
+<div class="math">
+\[p( x_k = 0 \textrm{ for } i \lt k \le j) = \sum_{p = 0}^i \sum_{q =j+1}^N \frac{ Z_{0,p} e^{-\beta E(p,q)} Z_{q,N}}{Z_{0,N}}\]</div>
+<div class="figure align-center" id="figure-9" style="width: 50%">
+<img alt="_images/algo-ss_marginal.png" src="_images/algo-ss_marginal.png" />
+<p class="caption">Fig. 9</p>
+<div class="legend">
+To condition on bins <span class="math">\([i, i+1)\)</span> and <span class="math">\([j, j+1)\)</span> co-occurring within the same segment, we need to
+sum over all paths in which nodes <span class="math">\(x_{i+1}, \ldots, x_{j} = 0\)</span>.</div>
+</div>
+</div>
+</div>
+<div class="section" id="sampling">
+<h2>Sampling<a class="headerlink" href="#sampling" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to obtain independent samples from the ensemble by
+performing stochastic backtracking walks on the segmentation graph. First, one must pre-compute the forward sub-partition functions. Then to generate samples one proceeds as follows:</p>
+<ul class="simple">
+<li>Start at the sink boundary node <span class="math">\(N\)</span>. Choose a predecessor boundary node <span class="math">\(k\)</span> from the <span class="math">\(N-1\)</span>
+available choices by sampling the discrete distribution whose probabilities are given by:</li>
+</ul>
+<div class="math">
+\[p(k \to N) = \frac{Z_{0,k}}{Z_{0,N}}e^{-\beta E(k,N)}\]</div>
+<ul class="simple">
+<li>Continue the backward random walk by sampling predecessor nodes <span class="math">\(k'\)</span> until the source node <span class="math">\(0\)</span> is reached.</li>
+</ul>
+<div class="math">
+\[p(k' \to k) = \frac{Z_{0,k'}}{Z_{0,k}}e^{-\beta E(k,k')}\]</div>
+<p>Alternatively, one can use the backward subpartition functions and stochastically walk from <span class="math">\(0\)</span> to <span class="math">\(N\)</span>.</p>
+<p>Hence, samples can be generated without the need for Markov chain-based
+sampling methods (e.g. Metropolis sampling), which produce correlated samples.</p>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="scoring.html" class="btn btn-neutral float-right" title="Scoring systems"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="theory.html" class="btn btn-neutral" title="Theory"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Nezar Abdennur.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,300 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Motivation &mdash; lavaburst 0.1.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="lavaburst 0.1.1 documentation" href="index.html"/>
+        <link rel="next" title="Theory" href="theory.html"/>
+        <link rel="prev" title="Introduction" href="intro.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> lavaburst</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#a-probabilistic-segmentation-model-for-genomic-interaction-maps">A probabilistic segmentation model for genomic interaction maps</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Motivation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-s-in-a-domain">What&#8217;s in a domain?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#finding-communities-in-a-haystack">Finding communities in a haystack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#restrict-the-search-space">Restrict the search space</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#the-segmentation-path-graph">The segmentation path graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#a-statistical-ensemble">A statistical ensemble</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algo.html">Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#optimal-segmentation">Optimal segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#sampling">Sampling</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scoring.html">Scoring systems</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#extensivity">Extensivity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#log-odds-scores">Log-odds scores</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#potts-energy-model">Potts energy model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scoring.html#other-scoring-functions">Other scoring functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Methodologies</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="related.html#network-community-detection">Network community detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#sequence-alignment">Sequence alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#hidden-markov-models">Hidden Markov Models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extend.html">Extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#gapped-and-local-segmentation">Gapped and local segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#emission-probabilities-and-inference">Emission probabilities and inference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">lavaburst</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Motivation</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/motivation.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="motivation">
+<h1>Motivation<a class="headerlink" href="#motivation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-s-in-a-domain">
+<h2>What&#8217;s in a domain?<a class="headerlink" href="#what-s-in-a-domain" title="Permalink to this headline">¶</a></h2>
+<p>The first large-scale three-dimensional features about chromatin gleaned
+from early Hi-C studies were the open and closed regions of chromatin
+called compartments (see Figure ). More recent Hi-C mapping identified
+high contact density regions within chromatin compartments called
+topologically associating domains (TADs) that are largely conserved in
+their positions between cell types . The exact boundaries were
+determined by training a hidden Markov model against computed tracks of
+contact frequency directionality bias. However, as can be seen by eye in
+Figure , such regions can be further stratified into regions both larger
+and smaller than the ones defined as TADs (green line segments). This
+makes it challenging to determine the biological significance of domains
+at any particular scale and highlights the importance of assessing
+structural signatures at many different scales and resolutions in order
+to identify more precisely what features are predictive of biological
+function.</p>
+<div class="figure align-center" id="figure-1" style="width: 75%">
+<img alt="features in Hi-C maps" src="_images/motiv-eig-tads.png" />
+<p class="caption">Fig. 1</p>
+<div class="legend">
+Structural features observed in Hi-C data. (a) Compartments (average size <span class="math">\(\sim\)</span> 5Mb) form the characteristic plaid pattern in the heatmaps (single chromosome shown). The signal is extracted using spectral decomposition. (b) TADs are smaller (median size <span class="math">\(\sim\)</span> 400-500kb) segments that are strongly conserved between cell types.</div>
+</div>
+</div>
+<div class="section" id="finding-communities-in-a-haystack">
+<h2>Finding communities in a haystack<a class="headerlink" href="#finding-communities-in-a-haystack" title="Permalink to this headline">¶</a></h2>
+<p>Hi-C heatmaps <span class="math">\(A_{ij}\)</span> provide quantitative readouts for pairs of
+genomic coordinate bins <span class="math">\(i\)</span> and <span class="math">\(j\)</span>. We can regard a
+symmetric heatmap matrix <span class="math">\(A\)</span> as the adjacency matrix of an
+undirected weighted graph, whose nodes are genomic bins (see <a class="reference internal" href="#figure-1"><em>Fig. 1</em></a>).
+The edge weight <span class="math">\(A_{ij}\)</span> is an interaction
+score for bins <span class="math">\(i\)</span> and <span class="math">\(j\)</span>. In the case of processed Hi-C
+data, this is normally interpreted as the relative contact frequency
+between the two genomic loci.</p>
+<p>A network-oriented perspective makes it tempting to apply graph
+algorithms for node partitioning, also known as <em>community detection</em> in
+the field of network science, to identify biologically relevant domains.
+One of the most popular methods for community detection in networks is
+modularity maximization . For a given assignment of nodes to communities
+(i.e., partition), an objective function called <em>modularity</em> compares
+the edge weight between pairs of nodes in the same community to the
+expected edge weight between two nodes under a random null model. The
+null model most commonly used is called the <em>configuration null model</em>,
+which consists of the complete ensemble of graphs having a fixed degree
+distribution. Under the configuration null model, the expected weight
+between two nodes <span class="math">\(i\)</span> and <span class="math">\(j\)</span> of degree <span class="math">\(k_i\)</span> and
+<span class="math">\(k_j\)</span> is <span class="math">\(\frac{k_i k_j}{2m}\)</span>, where <span class="math">\(m\)</span> is the total
+edge weight of the graph.</p>
+<div class="figure align-center" id="figure-2" style="width: 75%">
+<img alt="Hi-C interaction heatmap as a graph" src="_images/motiv-hic-graph.png" />
+<p class="caption">Fig. 2</p>
+<div class="legend">
+A binned Hi-C contact frequency heatmap can be interpreted as a complete weighted graph (including zero edge weights) between <span class="math">\(N\)</span> genomic bins.</div>
+</div>
+<p>The multi-resolution form of the modularity function <span class="math">\(Q\)</span> for a
+partition <span class="math">\(\pi\)</span> of a network&#8217;s nodes <span class="math">\(\{1,2, \ldots, N\}\)</span> is</p>
+<div class="math" id="equation-potts">
+<span id="equation-potts"></span><span class="eqno">(1)</span>\[Q(\pi) = \frac{1}{2m}\sum_{\lt i,j \gt} \left(A_{ij} - \gamma \frac{k_i k_j}{2m}\right)\delta(\pi_i,\pi_j).\]</div>
+<p>where the summation runs over all pairs of nodes in the same community
+(<span class="math">\(\delta(\pi_i, \pi_j) = 1\)</span> if <span class="math">\(\pi_i=\pi_j\)</span> and <span class="math">\(0\)</span>
+if not). The parameter <span class="math">\(\gamma\)</span> acts as a weight on the null
+model, and determines the <em>resolution</em> of the partition. The larger the
+value of <span class="math">\(\gamma\)</span>, the smaller the typical size of detected
+communities.</p>
+<p>Models of interacting spin systems from statistical physics have played
+a key role in the development of modern algorithms for community
+detection. The most well known spin system is the Ising model, which is
+a model of ferromagnetism, where magnetic spins are nodes on a lattice
+that take on one of two states (up or down) and interact with their
+nearest neighbors. Modularity maximization is actually equivalent to
+finding the ground state of a particular kind of spin system known as
+the Potts model where each node in the network corresponds to a magnetic
+spin that can assume one of a number of different spin states (i.e. the
+community labels). Edge weights between nodes in the same spin state
+(community) are ferromagnetic (stabilizing) coupling energies. The null
+model acts as an anti-ferromagnetic (destabilizing) applied field on
+interacting spins. Finding the maximum modularity partition of the graph
+therefore corresponds to minimizing the Potts Hamiltonian
+<span class="math">\(H_{potts}(\pi) = -mQ(\pi)\)</span> to find the ground state configuration
+of the spins.</p>
+</div>
+<div class="section" id="restrict-the-search-space">
+<h2>Restrict the search space<a class="headerlink" href="#restrict-the-search-space" title="Permalink to this headline">¶</a></h2>
+<p>In general, modularity maximization is NP-complete cite{}, but we gain a
+great deal of traction if we restrict the solution space of partitions
+of the nodes to <strong>segmentations</strong>, where only chains of consecutive nodes
+can be grouped together. This is convenient because many of the
+interesting features seen by eye in Hi-C data, such as TADs and their
+apparent substrata, are segmental. Not only can we compute a single
+point estimate of the community structure from the data, but we can
+efficiently extract a great deal of information about entire statistical
+ensembles of segmentations by dynamic programming, and thereby
+characterize features at multiple scales.</p>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="theory.html" class="btn btn-neutral float-right" title="Theory"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="intro.html" class="btn btn-neutral" title="Introduction"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Nezar Abdennur.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Scoring systems &mdash; lavaburst 0.1.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="lavaburst 0.1.1 documentation" href="index.html"/>
+        <link rel="next" title="Examples" href="examples.html"/>
+        <link rel="prev" title="Algorithms" href="algo.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> lavaburst</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intro.html#a-probabilistic-segmentation-model-for-genomic-interaction-maps">A probabilistic segmentation model for genomic interaction maps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#what-s-in-a-domain">What&#8217;s in a domain?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#finding-communities-in-a-haystack">Finding communities in a haystack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="motivation.html#restrict-the-search-space">Restrict the search space</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#the-segmentation-path-graph">The segmentation path graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="theory.html#a-statistical-ensemble">A statistical ensemble</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algo.html">Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#optimal-segmentation">Optimal segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#marginal-probabilities">Marginal probabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algo.html#sampling">Sampling</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Scoring systems</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#extensivity">Extensivity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#log-odds-scores">Log-odds scores</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#potts-energy-model">Potts energy model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#other-scoring-functions">Other scoring functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Methodologies</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="related.html#network-community-detection">Network community detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#sequence-alignment">Sequence alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#hidden-markov-models">Hidden Markov Models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extend.html">Extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#gapped-and-local-segmentation">Gapped and local segmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="extend.html#emission-probabilities-and-inference">Emission probabilities and inference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">lavaburst</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Scoring systems</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/scoring.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="scoring-systems">
+<h1>Scoring systems<a class="headerlink" href="#scoring-systems" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="extensivity">
+<h2>Extensivity<a class="headerlink" href="#extensivity" title="Permalink to this headline">¶</a></h2>
+<p>Many intuitive scoring criteria for segments, such as fold-enrichment, produce quantities that are &#8220;intensive&#8221;, that is, they do not scale with a segment&#8217;s length. Since energies (and scores) are extensive quantities, applying an intensive measure produces an implicit <em>a priori</em> bias against large segments, because a segmentation with <em>larger</em> segments will have <em>fewer</em> segments, and therefore a lower cumulative score when fold-enrichment among all segments is identical.</p>
+<p>Therefore, it is important to note that to turn an intensive segment quality metric into a scoring function with a uniform prior on segment length, one must scale a segment&#8217;s score in direct proportion to its length in bins: a &#8220;fair&#8221; scoring function must be extensive.</p>
+<p>On the other hand, we can impose an explicit prior on segment length by building a scoring function from an intensive quality metric and applying to it a particular scaling relation with respect to segment length.</p>
+</div>
+<div class="section" id="log-odds-scores">
+<h2>Log-odds scores<a class="headerlink" href="#log-odds-scores" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="potts-energy-model">
+<h2>Potts energy model<a class="headerlink" href="#potts-energy-model" title="Permalink to this headline">¶</a></h2>
+<p>In the space of segmentations <span class="math">\(S\)</span>, we can decompose the multiresolution <a class="reference internal" href="motivation.html#equation-potts"><em>Potts</em></a> Hamiltonian described  earlier into an energy function for segments:</p>
+<p>When a heatmap is a stochastic matrix (e.g. a <em>balanced</em> Hi-C heatmap), we can take all <span class="math">\(k_i = 1\)</span> and <span class="math">\(2m = N\)</span>. Then the Potts energy function can be written:</p>
+<div class="math">
+\[\begin{split}S_{\textrm{potts}}(a,b) &amp;= \sum_{i=a}^{b-1}\sum_{j=a}^{b-1} \left(A_{ij}  - \frac{\gamma}{N} \right) \\
+                               &amp;= \left[\sum_{i=a}^{b-1}\sum_{j=a}^{b-1} A_{ij}\right]  - \left[\frac{\gamma}{N}(b-a)^2\right]\end{split}\]</div>
+<p>Consider the submatrix corresponding to segment <span class="math">\([a,b)\)</span> in the heatmap: <tt class="docutils literal"><span class="pre">A[a:b,a:b]</span></tt>. We see that the configuration null model makes an assumption about how much edge mass is dedicated to every such submatrix <em>per pixel</em>. The Potts model score takes the difference between the observed mass in the submatrix and this background mass.</p>
+<p>The Potts scoring function imposes a segment length bias on segmentations: Take a segment with total edge mass <span class="math">\(c\)</span> and a scale it up to twice its size, so that it has twice its original length and total edge mass <span class="math">\(c^2\)</span>. We can see that the Potts score will increase by a factor of four, rather than two.</p>
+</div>
+<div class="section" id="other-scoring-functions">
+<h2>Other scoring functions<a class="headerlink" href="#other-scoring-functions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="armatus">
+<h3>Armatus<a class="headerlink" href="#armatus" title="Permalink to this headline">¶</a></h3>
+<p>Filipova et al (2014) presented the optimal segmentation algorithm in the context
+of a Hi-C domain scoring function with a tunable scale parameter to find domains
+at multiple resolutions.</p>
+<div class="math">
+\[\begin{split}&amp; q(a,b) = \frac{\sum_{i=a}^{b-1} \sum_{j=a}^{b-1} A_{ij}}{ (b-a)^\gamma }\\
+&amp; \mu(l) = \textrm{mean } q \textrm{ for segments with length } l \\
+\\
+&amp; S_{ \textrm{armatus} }(a,b) = \max \left(0, q(a,b) - \mu(b-a) \right)\end{split}\]</div>
+</div>
+<div class="section" id="corner-score">
+<h3>Corner score<a class="headerlink" href="#corner-score" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="phase-consistency-score">
+<h3>Phase-consistency score<a class="headerlink" href="#phase-consistency-score" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples"/>Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="algo.html" class="btn btn-neutral" title="Algorithms"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Nezar Abdennur.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
