@@ -1,8 +1,11 @@
 BUILDDIR=lavaburst/core
 
-.PHONY: all clean build test install uninstall
+.PHONY: all clean docs build test install uninstall
 
 all: clean build test
+
+docs:
+	cd docs && $(MAKE) html
 
 clean:
 	rm $(BUILDDIR)/*.so
