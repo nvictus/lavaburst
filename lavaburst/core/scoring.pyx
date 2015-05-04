@@ -91,6 +91,34 @@ cpdef normalized_sums_by_segment(
     return S
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+cpdef outer_accumulate(np.ndarray[np.double_t, ndim=1] x):
+    
+    # N bins, n bin edges
+    cdef int N = len(x) - 1
+    cdef int n = N + 1 
+    cdef np.ndarray[np.double_t, ndim=2] L = np.zeros((n, n), dtype=float)
+    cdef int i, diag
+
+    # base case: 0th diag
+    for i in range(0, n):
+        L[i, i] = x[i]
+
+    # base case: 1st diag
+    for i in range(0, n-1):
+        L[i, i+1] = L[i+1, i] = x[i] + x[i+1]
+
+    for diag in range(2, n):
+        for i in range(0, n-diag):
+            L[i, i+diag] \
+                = L[i+diag, i] \
+                = L[i, i+diag-1] + L[i+1, i+diag] - L[i+1, i+diag-1]
+
+    return L
+
+
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -250,6 +278,3 @@ def diag_mean(A, mask):
             avg[offset] = meanss
 
     return data
-
-
-

@@ -1,7 +1,31 @@
 from __future__ import division, print_function
 import itertools
+import functools
+import warnings
 import numpy as np
 where = np.flatnonzero
+
+import pandas
+from .core.utils import fill_triu_inplace, fill_tril_inplace
+
+
+def deprecated(func, replacement=None):
+    # based on http://code.activestate.com/recipes/577819-deprecated-decorator/
+    # from Giampaolo Rodola (MIT licensed)
+    msg = "%s is deprecated" % func.__name__
+    if replacement is not None:
+        msg += "; use %s instead" % replacement
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        return func(*args, **kwargs)
+    return wrapped
+
+
+def to_tsv(filename, df, **kwargs):
+    if filename.endswith('.gz'):
+        kwargs['compression'] = 'gzip'
+    df.to_csv(filename, sep='\t', index=False, **kwargs)
 
 
 def masked_ufunc(ufunc, wheremask, axis=(0,1)):
@@ -165,7 +189,6 @@ def mask_restore_path(path, passmask):
     return np.array(sorted(set(new_path)), dtype=int)
 
 
-
 def tilt_heatmap(A, n_diags=None, pad=np.nan):
     """
     Vertically stacks the upper diagonals of A onto a new matrix of the same 
@@ -251,143 +274,42 @@ def triangle_outline(segments):
     return np.array(x)-0.5, np.array(y)-0.5
 
 
-def reveal_tril(A, k=0):
-    E = np.ones(A.shape)
-    return np.ma.masked_where(np.logical_not(np.tril(E, -k)), A)
-
-
-def reveal_triu(A, k=0):
-    E = np.ones(A.shape)
-    return np.ma.masked_where(np.logical_not(np.triu(E, k)), A)
-
-
-def contactbias(A, window=200):
-    N = len(A)
-    di = np.zeros(N)
-
-    for i in range(N):
-        w = max(0, min(window, N-i))
-        di[i] = (A[i, i:(i+w)+1].sum() - A[i, (i-w):i+1].sum()) / A[i, (i-w):(i+w)+1].sum()
-
-    return di
-
-
-def directionality_chisquare(A, window=200):
-    N = len(A)
-    di = np.zeros(N)
-
-    for i in range(N):
-        w = min(window, N-i)
-        b, a = A[i, i:(i+w)+1].sum(), A[i, (i-w):i+1].sum()
-        e = (a + b)/2.0
-        di[i] = np.sign(b - a) * ( (a-e)**2 + (b-e)**2 )/e
-
-    return di
-
-
-def where_diag(N, diag):
-    if diag >= 0:
-        diag_indices = np.c_[np.arange(0, N-diag), np.arange(diag, N)]
+def reveal_tril(A, k=0, inplace=False):
+    if not inplace:
+        A = np.array(A)
     else:
-        diag_indices = np.c_[np.arange(-diag, N), np.arange(0, N+diag)]   
-    return diag_indices[:, 0], diag_indices[:, 1]
+        A = np.asarray(A)
+    fill_triu_inplace(A, k, value=np.nan)
+    return A
 
 
-def sliding_window(w, *arrays):
-    n = len(arrays[0])
-    for i in range(0, n-w+1):
-        yield tuple(x[i:i+w] for x in arrays)
+def reveal_triu(A, k=0, inplace=False):
+    if not inplace:
+        A = np.array(A)
+    else:
+        A = np.asarray(A)
+    fill_tril_inplace(A, k, value=np.nan)
+    return A
 
 
-def insul(A, extent=200):
-    N = len(A)
-    score = np.zeros(N)
-    dscore = np.zeros(N)
+def fill_diagonal(A, values, k=0, wrap=False, inplace=False):
+    """
+    Based on numpy.fill_diagonal, but allows for kth diagonals as well.
+    Only works on 2D arrays.
 
-    for diag in range(extent):
-        for i, (qi, qj) in enumerate(
-                sliding_window(diag+1, *where_diag(N, diag))):
-            dscore[i+diag] = A[qi, qj].mean()
-        score[diag:-diag] += dscore[diag:-diag] #(dscore[diag:-diag] - score[diag:-diag]) / diag
-
-    return score
-
-
-def insul_diamond(A, extent=200):
-    N = len(A)
-    starts = np.arange(0, N-extent)
-    ends = np.arange(extent, N)
-
-    score = np.zeros(N)
-    for i in range(0, N):
-        w = min(extent, i, N-i)
-        score[i] = A[i-w:i, i:i+w].sum()
-    score /= score.mean()
-
-    return score
-
-
-
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.nonecheck(False)
-# def log_contactmap_from_insulation_prob(
-#         np.ndarray[np.double_t, ndim=1] p_insul):
-
-#     cdef np.ndarray[np.double_t, ndim=1] log_pc = np.log(1 - p_insul)
-    
-#     # N bins, n bin edges
-#     cdef int N = len(log_pc) - 1
-#     cdef int n = N+1 
-#     cdef np.ndarray[np.double_t, ndim=2] L = np.zeros((n, n), dtype=float)
-#     cdef int i, diag
-
-#     # base case (first two diagonals) 
-#     # XXX --- leave out the main diag for consistency?
-#     for i in range(0, n):
-#         L[i, i] = log_pc[i]
-
-#     # first diag
-#     for i in range(0, n-1):
-#         L[i, i+1] \
-#             = L[i+1, i] \
-#             = log_pc[i] + log_pc[i+1]
-
-#     for diag in range(2, n):
-#         for i in range(0, n-diag):
-#             L[i, i+diag] \
-#                 = L[i+diag, i] \
-#                 = L[i, i+diag-1] + L[i+1, i+diag] - L[i+1, i+diag-1]
-
-#     return L
-
-
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.nonecheck(False)
-# def fill_triu_inplace(
-#         np.ndarray[np.double_t, ndim=2] A, 
-#         double value=np.nan):
-
-#     cdef int N = len(A)
-#     cdef int i, j
-#     for i in range(N):
-#         for j in range(i, N):
-#             A[i, j] = value
-
-
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.nonecheck(False)
-# def fill_tril_inplace(
-#         np.ndarray[np.double_t, ndim=2] A, 
-#         double value=np.nan):
-
-#     cdef int N = len(A)
-#     cdef int i, j
-#     for i in range(N):
-#         for j in range(0, i):
-#             A[i, j] = value
+    """
+    if not inplace:
+        A = np.array(A)
+    else:
+        A = np.asarray(A)
+    start = k
+    end = None
+    step = A.shape[1] + 1
+    #This is needed so a tall matrix doesn't have the diagonal wrap around.
+    if not wrap:
+        end = start + A.shape[1] * A.shape[1]
+    A.flat[start:end:step] = values
+    return A
 
 
 # def reveal_diagonal_band(A, k=0, lower=True, upper=True):

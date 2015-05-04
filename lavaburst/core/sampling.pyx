@@ -231,8 +231,6 @@ cdef sweep_conserved_op(
     #energy[s] = score_state(Eseg, state[s, :])
 
 
-
-
 def dieroll(p, n=None, cmf=False):
     if cmf:
         cmf = p
