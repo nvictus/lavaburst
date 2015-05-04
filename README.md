@@ -2,7 +2,7 @@
 
 Chromatin domains bursting with flavor!
 
-Let's get started! See [IPython Notebook](https://raw.githubusercontent.com/nezar-compbio/lavaburst/master/example/example.ipynb).
+Let's get started! See [IPython Notebook](http://nbviewer.ipython.org/github/nezar-compbio/lavaburst/blob/master/example/example.ipynb).
 
 
 ### Optimal segmentation ###
