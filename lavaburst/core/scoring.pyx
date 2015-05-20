@@ -156,59 +156,84 @@ cpdef armatus_score(np.ndarray[np.double_t, ndim=2] Sseg, double gamma):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cpdef arrowhead(np.ndarray[np.double_t, ndim=2] A):
+cpdef np.ndarray[np.double_t, ndim=2] arrowhead(np.ndarray[np.double_t, ndim=2] A):
     cdef int N = len(A)
-    cdef np.ndarray[np.double_t, ndim=2] R = np.zeros((N,N), dtype=float)
+    cdef np.ndarray[np.double_t, ndim=2] H = np.zeros((N,N), dtype=float)
     cdef int i, d
+    cdef double denom
     for i in range(N):
         for d in range(0, N-i):
             denom = (A[i,i-d] + A[i, i+d])
-            R[i,i+d] = R[i+d,i] = (A[i,i-d] - A[i,i+d])/denom if denom != 0 else 0
-    return R
+            H[i,i+d] = H[i+d,i] = (A[i,i-d] - A[i,i+d])/denom if denom != 0 else 0
+    return H
 
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cpdef arrowhead_r(np.ndarray[np.double_t, ndim=2] A):
+cpdef np.ndarray[np.double_t, ndim=2] arrowhead_r(np.ndarray[np.double_t, ndim=2] A):
     cdef int N = len(A)
-    cdef np.ndarray[np.double_t, ndim=2] R = np.zeros((N,N), dtype=float)
+    cdef np.ndarray[np.double_t, ndim=2] H = np.zeros((N,N), dtype=float)
     cdef int i, d
+    cdef double denom
     for i in range(N):
         for d in range(0, N-i):
             denom = (A[i,i-d] + A[i, i+d])
-            R[i,i+d] = R[i+d,i] = (A[i,i+d] - A[i,i-d])/denom if denom != 0 else 0
-    return R
+            H[i,i+d] = H[i+d,i] = (A[i,i+d] - A[i,i-d])/denom if denom != 0 else 0
+    return H
 
 
-@cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+cpdef accumulate_arrowhead(
+    np.ndarray[np.double_t, ndim=2] H,
+    int offset=1):
+    
+    cdef int N = len(H)
+    cdef np.ndarray[np.double_t, ndim=2] U = np.zeros(
+        (N+offset,N+offset), dtype=float)
+    
+    cdef int i, j, k, flag
+    cdef double c
+    
+    U[0, offset] = U[offset, 0] = 0.25 * H[0,0]
+
+    for j in range(1, N):
+        U[j, j+offset] = U[j+offset, j] = 0.25 * H[j,j]
+        c = 0.75 * H[j-1,j]
+        flag = 1
+        k = 1
+        for i in range(j-1, 0, -1):
+            U[i, j+offset] = U[j+offset, i] = U[i, j-1 + offset] + c
+            if flag:
+                c = c - 0.5*H[j-k, j]
+                flag = 0
+            else:
+                c = c - 0.25*H[j-k,j] - 0.25*H[j-k-1,j]
+                k += 1
+                flag = 1
+            c = c + H[i-1, j]
+        U[0, j+offset] = U[j+offset, 0] = U[0, j-1 + offset] + c
+    
+    return U
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.embedsignature(True)
 def corner_score(np.ndarray[np.double_t, ndim=2] A):
-    cdef int N = len(A)
-    cdef np.ndarray[np.double_t, ndim=2] R = arrowhead(A)
-    cdef np.ndarray[np.double_t, ndim=2] U = np.zeros((N+1,N+1))
-    cdef int i, j, k
-    for i in range(0, N+1):
-        U[i,0] = 0.0
-        for j in range(i+1, N+1):
-            k = (i+j)//2
-            U[i,j] = U[j,i] = U[i,j-1] + R[i:k+1, j-1].sum()
+    """
+    Corner score.
 
-    cdef np.ndarray[np.double_t, ndim=2] R2 = arrowhead_r(np.flipud(np.fliplr(A)))
-    cdef np.ndarray[np.double_t, ndim=2] L = np.zeros((N+1,N+1))
-    for i in range(0, N+1):
-        L[i,0] = 0.0
-        for j in range(i+1, N+1):
-            k = (i+j)//2
-            L[i,j] = L[j,i] = L[i,j-1] + R2[i:k+1, j-1].sum()
-    L = np.flipud(np.fliplr(L))
-
-    #cdef np.ndarray[np.double_t, ndim=2] norm = toeplitz(np.arange(N+1, dtype=float))
-    return (L-U) #/norm
+    """
+    cdef np.ndarray[np.double_t, ndim=2] H1 = arrowhead(A)
+    cdef np.ndarray[np.double_t, ndim=2] H2 = arrowhead_r(A[::-1,::-1])
+    cdef np.ndarray[np.double_t, ndim=2] U = accumulate_arrowhead(H1)
+    cdef np.ndarray[np.double_t, ndim=2] L = accumulate_arrowhead(H2)[::-1,::-1]
+    return L - U
 
 
 def logbins(a, b, pace, N_in=0):
