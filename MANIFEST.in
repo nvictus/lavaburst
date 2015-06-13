@@ -4,6 +4,7 @@ include README.rst
 
 graft docs
 graft tests
+graft example
 graft lavaburst
 
 prune docs/build
