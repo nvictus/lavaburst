@@ -1,6 +1,10 @@
+# -*- encoding: utf-8 -*-
 from setuptools import setup, find_packages, Extension
+from os import path
 import ast
+import io
 import re
+
 
 try:
     from Cython.Distutils import build_ext as _build_ext
@@ -11,21 +15,23 @@ except ImportError:
     use_cython = False
 
 
-# Some tricks below borrowed from
-# https://github.com/biocore/scikit-bio/blob/master/setup.py
-
-# Get version number without importing
-# Version parsing from __init__ pulled from Flask's setup.py
-# https://github.com/mitsuhiko/flask/blob/master/setup.py
-_version_re = re.compile(r'__version__\s+=\s+(.*)')
-
-with open('lavaburst/__init__.py', 'rb') as f:
-    hit = _version_re.search(f.read().decode('utf-8')).group(1)
-    version = str(ast.literal_eval(hit))
+def read(*names, **kwargs):
+    return io.open(
+        path.join(path.dirname(__file__), *names),
+        encoding=kwargs.get("encoding", "utf8")
+    ).read()
 
 
-with open('README.rst') as f:
-    long_description = f.read()
+def get_version():
+    # Version parsing from __init__ pulled from Flask's setup.py
+    # https://github.com/mitsuhiko/flask/blob/master/setup.py
+    _version_re = re.compile(r'__version__\s+=\s+(.*)')
+    hit = _version_re.search(read('lavaburst', '__init__.py')).group(1)
+    return str(ast.literal_eval(hit))
+
+
+def get_long_description():
+    return read('README.rst')
 
 
 classifiers = """
@@ -53,30 +59,35 @@ class build_ext(_build_ext):
         import numpy
         self.include_dirs.append(numpy.get_include())
 
-ext = '.pyx' if use_cython else '.c'
-ext_modules = [
-    Extension("*", ["lavaburst/core/*" + ext])
-]
-if use_cython:
-    ext_modules = cythonize(ext_modules) #, annotate=True
+
+def get_ext_modules():
+    ext = '.pyx' if use_cython else '.c'
+    ext_modules = [
+        Extension("*", [path.join("lavaburst", "core", "*"+ext)])
+    ]
+    if use_cython:
+        ext_modules = cythonize(ext_modules) #, annotate=True
+    return ext_modules
 
 
 setup(
     name='lavaburst',
-    version=version,
+    version=get_version(),
     license='MIT',
     description='Probabilistic segmentation modeling for Hi-C data',
-    long_description=long_description,
+    long_description=get_long_description(),
     classifiers=[s.strip() for s in classifiers.split('\n') if s],
-    keywords='topological domains genomics bioinformatics Hi-C',
+    keywords=['bioinformatics', 'genomics', 'Hi-C', 'topological domains'],
     author='Nezar Abdennur',
     author_email='nezar@mit.edu',
     url='http://nezar-compbio.github.io/lavaburst/',
     packages=find_packages(),
-    ext_modules = ext_modules,
+    ext_modules = get_ext_modules(),
     cmdclass = {'build_ext': build_ext},
     setup_requires=['numpy'],
-    # install_requires=[],
+    install_requires=['numpy'],
+    zip_safe=False,
+    include_package_data=True,
     # package_data={
     #     'sample': ['package_data.dat'],
     # },
