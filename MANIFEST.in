@@ -1,0 +1,12 @@
+include CHANGES.md
+include LICENSE
+include README.rst
+
+graft docs
+graft tests
+graft lavaburst
+
+prune docs/build
+
+global-exclude *.pyc
+global-exclude *.pyo
