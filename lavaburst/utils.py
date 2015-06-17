@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 where = np.flatnonzero
 
-import pandas
+#import pandas
 from .core.utils import fill_triu_inplace, fill_tril_inplace
 
 
@@ -192,17 +192,24 @@ def mask_restore_path(path, passmask):
 def tilt_heatmap(A, n_diags=None, pad=np.nan):
     """
     Vertically stacks the upper diagonals of A onto a new matrix of the same 
-    shape, giving rise to a "tilted" half matrix.
+    shape as A, giving rise to a "tilted" half matrix.
 
     This is basically a hack to visualize a matrix rotated 45 degrees to the
     left, since AFAIK matplotlib can't rotate pixel images.
 
-    Input:
-        A   - symmetric N x N matrix
-        pad - pad value (default: NaN)
+    Input
+    -----
+    A: ndarray
+        Symmetric N x N matrix.
+    n_diags: integer, optional
+        Number of diagonals to copy, starting from the main diagonal.
+        The entire upper triangle is tilted by default.
+    pad: number, optional
+        Padding value for unfilled elements (default: NaN).
 
-    Output:
-        T - N x N "tilted" version of upper triangle of A
+    Returns
+    -------
+    T: "tilted" version of upper triangle of A.
 
     Note that this transformation distorts the matrix when viewed with equal 
     aspect. When using imshow/matshow, set the aspect ratio to sqrt(.25).
@@ -216,7 +223,7 @@ def tilt_heatmap(A, n_diags=None, pad=np.nan):
     if n_diags is None:
         n_diags = N
 
-    T = -np.ones((n_diags, N))*pad
+    T = np.ones((n_diags, N))*pad
     for k in xrange(n_diags):
         T[k, k//2 : N-(k+1)//2] = A.diagonal(k)
 
