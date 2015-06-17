@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 from setuptools import setup, find_packages, Extension
 from os import path
+import glob
 import ast
 import io
 import re
@@ -11,7 +12,7 @@ try:
     from Cython.Build import cythonize
     use_cython = True
 except ImportError:
-    from setuptools import build_ext as _build_ext
+    from setuptools.command.build_ext import build_ext as _build_ext
     use_cython = False
 
 
@@ -62,8 +63,9 @@ class build_ext(_build_ext):
 
 def get_ext_modules():
     ext = '.pyx' if use_cython else '.c'
+    src_files = glob.glob(path.join("lavaburst", "core", "*" + ext))
     ext_modules = [
-        Extension("*", [path.join("lavaburst", "core", "*"+ext)])
+        Extension("lavaburst.core", src_files)
     ]
     if use_cython:
         ext_modules = cythonize(ext_modules) #, annotate=True
