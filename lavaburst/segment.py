@@ -93,7 +93,7 @@ class SegModel(object):
         Lss = log_segment_cooccur_marginal__from_segment_marginal(Eseg, beta, Ls)
         Pss = np.exp(Lss - Lss[-1,-1])
         if self.edgemask is not None:
-            Ps = utils.mask_restore(Pss, self.edgemask)
+            Pss = utils.mask_restore(Pss, self.edgemask[:-1])
         return Pss
 
     def sample(self, beta, n, shuffled=False):

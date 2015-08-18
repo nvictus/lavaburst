@@ -1,4 +1,8 @@
-from .core.scoring import *
+from __future__ import division, print_function, unicode_literals
+import numpy as np
+
+from .core.scoring import sums_by_segment
+from .core import scoring as _scoring
 from . import utils
 
 
@@ -18,6 +22,17 @@ def modularity_score(A, gamma, binmask=None, **kw):
 potts_score = modularity_score
 
 
+def corner_score(A, binmask=None, **kw):
+    S = _scoring.corner_score(A)
+    N = A.shape[0]
+    if binmask is not None:
+        edges = np.zeros(N)
+        edges[~binmask] = np.nan
+        np.fill_diagonal(S, np.r_[edges, 0])
+
+    return S
+
+
 def logodds_score(A):
     pass
 
@@ -26,11 +41,7 @@ def logodds_score(A):
 #     pass
 
 
-# def corner_score(A):
-#     pass
-
-
-normalized_sums_by_segment = utils.deprecated(normalized_sums_by_segment)
+normalized_sums_by_segment = utils.deprecated(_scoring.normalized_sums_by_segment)
 
 
 def contactbias(A, window=200):
