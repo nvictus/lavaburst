@@ -6,33 +6,13 @@ import ast
 import io
 import re
 
-
 try:
     from Cython.Distutils import build_ext as _build_ext
     from Cython.Build import cythonize
-    use_cython = True
+    USE_CYTHON = True
 except ImportError:
     from setuptools.command.build_ext import build_ext as _build_ext
-    use_cython = False
-
-
-def read(*names, **kwargs):
-    return io.open(
-        path.join(path.dirname(__file__), *names),
-        encoding=kwargs.get("encoding", "utf8")
-    ).read()
-
-
-def get_version():
-    # Version parsing from __init__ pulled from Flask's setup.py
-    # https://github.com/mitsuhiko/flask/blob/master/setup.py
-    _version_re = re.compile(r'__version__\s+=\s+(.*)')
-    hit = _version_re.search(read('lavaburst', '__init__.py')).group(1)
-    return str(ast.literal_eval(hit))
-
-
-def get_long_description():
-    return read('README.rst')
+    USE_CYTHON = False
 
 
 classifiers = """
@@ -49,8 +29,43 @@ classifiers = """
 """
 
 
-# Extension module build configuration
+def _read(*parts, **kwargs):
+    return io.open(
+        path.join(path.dirname(__file__), *parts),
+        encoding=kwargs.pop('encoding', 'utf-8')
+    ).read()
+
+
+def get_version():
+    # Version parsing from __init__ pulled from Flask's setup.py
+    # https://github.com/mitsuhiko/flask/blob/master/setup.py
+    _version_re = re.compile(r'__version__\s+=\s+(.*)')
+    hit = _version_re.search(_read('lavaburst', '__init__.py')).group(1)
+    return str(ast.literal_eval(hit))
+
+
+def get_long_description():
+    return _read('README.rst')
+
+
+def get_ext_modules():
+    ext = '.pyx' if USE_CYTHON else '.c'
+    src_files = glob.glob(path.join("lavaburst", "core", "*" + ext))
+
+    ext_modules = []
+    for src_file in src_files:
+        name = "lavaburst.core." + path.splitext(path.basename(src_file))[0]
+        ext_modules.append(Extension(name, [src_file]))
+
+    if USE_CYTHON:
+        # .pyx to .c
+        ext_modules = cythonize(ext_modules)  #, annotate=True
+
+    return ext_modules
+
+
 class build_ext(_build_ext):
+    # Extension module build configuration
     def finalize_options(self):
         _build_ext.finalize_options(self)
         # Fix to work with bootstrapped numpy installation
@@ -61,28 +76,17 @@ class build_ext(_build_ext):
         self.include_dirs.append(numpy.get_include())
 
 
-def get_ext_modules():
-    ext = '.pyx' if use_cython else '.c'
-    src_files = glob.glob(path.join("lavaburst", "core", "*" + ext))
-    ext_modules = [
-        Extension("lavaburst.core", src_files)
-    ]
-    if use_cython:
-        ext_modules = cythonize(ext_modules) #, annotate=True
-    return ext_modules
-
-
 setup(
     name='lavaburst',
     version=get_version(),
     license='MIT',
-    description='Probabilistic segmentation modeling for Hi-C data',
-    long_description=get_long_description(),
-    classifiers=[s.strip() for s in classifiers.split('\n') if s],
-    keywords=['bioinformatics', 'genomics', 'Hi-C', 'topological domains'],
     author='Nezar Abdennur',
     author_email='nezar@mit.edu',
     url='http://nezar-compbio.github.io/lavaburst/',
+    description='Probabilistic segmentation modeling for Hi-C data',
+    keywords=['bioinformatics', 'genomics', 'Hi-C', 'topological domains'],
+    long_description=get_long_description(),
+    classifiers=[s.strip() for s in classifiers.split('\n') if s],
     packages=find_packages(),
     ext_modules = get_ext_modules(),
     cmdclass = {'build_ext': build_ext},

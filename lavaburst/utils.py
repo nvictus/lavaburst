@@ -211,12 +211,12 @@ def tilt_heatmap(A, n_diags=None, pad=np.nan):
     -------
     T: "tilted" version of upper triangle of A.
 
-    Note that this transformation distorts the matrix when viewed with equal 
-    aspect. When using imshow/matshow, set the aspect ratio to sqrt(.25).
+    Note that this transformation distorts the height when viewed with equal 
+    aspect. When using imshow/matshow, set the aspect ratio to 1/2.
 
         >>> f = plt.figure()
         >>> ax = f.add_subplot(111)
-        >>> ax.matshow(tilt_heatmap(A), aspect=np.sqrt(.25), origin='lower')
+        >>> ax.matshow(tilt_heatmap(A), aspect=0.5, origin='lower')
 
     """
     N = len(A)
