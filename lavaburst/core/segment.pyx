@@ -11,15 +11,20 @@ from libc.math cimport log, exp, abs
 @cython.embedsignature(True)
 cpdef max_sum(np.ndarray[np.double_t, ndim=2] S):
     """
-    Perform max-sum algorithm (longest path) dynamic program on segmentation 
-    path graph with score matrix S.
+    Max-sum algorithm (longest path) dynamic program on segmentation path graph 
+    with score matrix ``S``.
 
-    Input:
-        S  -  score matrix (symmetric 2D numpy array)
+    Input
+    -----
+    S : 2d-array
+        segment score matrix (negative of energy matrix)
 
-    Returns:
-        opt[i]  - optimal score of path from 0..i
-        pred[i] - first predecessor node on optimal path from 0..i
+    Returns
+    -------
+    opt[i] : 1d-array
+        optimal score of path from 0..i
+    pred[i] : 1d-array
+        first predecessor node on optimal path from 0..i
 
     """
     cdef int N = len(S) - 1
@@ -90,19 +95,27 @@ cpdef max_sum__gapped(np.ndarray[np.double_t, ndim=2] S,
                       double go, double ge, double gc):
     """
     Perform gapped max-sum algorithm (longest path) dynamic program on 
-    segmentation path graph with score matrix S.
+    segmentation path graph with score matrix ``S``.
 
-    Input:
-        S  -  score matrix (symmetric 2D numpy array)
-        go - gap opening score
-        ge - gap extension score
-        gc - gap closure score
+    Input
+    -----
+    S : 2d-array
+        score matrix (symmetric 2D numpy array)
+    go : float
+        gap opening score
+    ge : float
+        gap extension score
+    gc : float
+        gap closure score
 
-    Returns:
-        opt[i,:]  - optimal score of path from 0..i 
-                    ending in segment/gap boundary
-        pred[i,:] - first predecessor node on optimal path from 0..i
-                    ending in segment/gap boundary
+    Returns
+    -------
+    opt : n x 2 array
+        Optimal score of path from 0..i ending in domain (opt[i,0]) or
+        gap (opt[i,1]) boundary.
+    pred[i,:] : n x 2 array
+        First predecessor node on optimal path from 0..i ending in domain
+        (pred[i,0]) or gap (pred[i,1]) boundary.
 
     """
     cdef int N = len(S) - 1
@@ -141,12 +154,23 @@ cpdef max_sum__gapped(np.ndarray[np.double_t, ndim=2] S,
 @cython.wraparound(False)
 @cython.nonecheck(False)
 @cython.embedsignature(True)
-cpdef get_path(np.ndarray[np.double_t, ndim=1] opt, np.ndarray[np.int_t, ndim=1] pred):
+cpdef get_path(
+        np.ndarray[np.double_t, ndim=1] opt,
+        np.ndarray[np.int_t, ndim=1] pred):
     """
     Backtrack over predecessor nodes to get the optimal path from max-sum.
 
-    Returns:
-        path (array) - optimal path of nodes from 0..N
+    Input
+    -----
+    opt : 1d-array
+        optimal score from max-sum
+    pred : 1d-array
+        predecessor list from max-sum
+
+    Returns
+    -------
+    path: 1d-array
+        optimal path of nodes from 0..N
 
     """
     cdef int N = len(opt) - 1
@@ -170,10 +194,20 @@ cpdef get_path__gapped(
         np.ndarray[np.double_t, ndim=2] opt, 
         np.ndarray[np.int_t, ndim=2] pred):
     """
-    Backtrack over predecessor nodes to get the optimal path from gapped max-sum.
+    Backtrack over predecessor nodes to get the optimal path from gapped 
+    max-sum.
 
-    Returns:
-        path (array) - optimal path of nodes from 0..N
+    Input
+    -----
+    opt : 1d-array
+        optimal score from gapped max-sum
+    pred : 1d-array
+        predecessor list from gapped max-sum
+
+    Returns
+    -------
+    path: 1d-array
+        optimal path of nodes from 0..N
 
     """
     cdef int N = opt.shape[0] - 1
@@ -201,64 +235,72 @@ cpdef get_path__gapped(
 
 
 @cython.embedsignature(True)
-def optimal_segmentation(np.ndarray[np.double_t, ndim=2] score):
+def optimal_segmentation(np.ndarray[np.double_t, ndim=2] S):
     """
-    Perform max-sum algorithm (longest path) dynamic program on segmentation 
-    path graph with score matrix S.
+    Find the optimal path on the segmentation path graph with score matrix
+    ``S``.
 
-    Returns:
-        path (array) - optimal path of nodes from 0..N
-        opt  (array) - optimal score of subproblems
+    Input
+    -----
+    S : 2d-array
+        segment score matrix (negative of energy matrix)
+
+    Returns
+    -------
+    path : 1d-array
+        optimal path of nodes from 0..N
+    opt : 1d-array
+        optimal score of path from 0..i
 
     """
-    opt, optk = max_sum(score)
+    opt, optk = max_sum(S)
     path = get_path(opt, optk)
     return path, opt
 
 
-@cython.embedsignature(True)
-def consensus_segments(list segments, weights):
-    """
-    Returns consensus list of nonoverlapping segments.
-    Segments are 2-tuples given as half-open intervals [a,b).
+# @cython.embedsignature(True)
+# def consensus_segments(list segments, weights):
+#     """
+#     Returns consensus list of nonoverlapping segments.
+#     Segments are 2-tuples given as half-open intervals [a,b).
 
-    """
-    occ = defaultdict(int)
-    for d, w in zip(segments, weights):
-        occ[d] += w
+#     """
+#     occ = defaultdict(int)
+#     for d, w in zip(segments, weights):
+#         occ[d] += w
 
-    cdef int i, j, s_choose, s_ignore
+#     cdef int i, j, s_choose, s_ignore
 
-    # map each domain to its closest non-overlapping predecessor
-    cdef int M = len(segments)
-    cdef np.ndarray[np.int_t, ndim=1] prev = np.zeros(M, dtype=int)
-    for i in range(M-1, -1, -1):
-        d = segments[i]
-        j = i - 1
-        while j > -1:
-            if segments[j][1] <= d[0]: 
-                prev[i] = j
-                break
-            j -= 1
+#     # map each domain to its closest non-overlapping predecessor
+#     cdef int M = len(segments)
+#     cdef np.ndarray[np.int_t, ndim=1] prev = np.zeros(M, dtype=int)
+#     for i in range(M-1, -1, -1):
+#         d = segments[i]
+#         j = i - 1
+#         while j > -1:
+#             if segments[j][1] <= d[0]: 
+#                 prev[i] = j
+#                 break
+#             j -= 1
 
-    # weighted interval scheduling dynamic program
-    cdef np.ndarray[np.int_t, ndim=1] score = np.zeros(M, dtype=int)
-    for i in range(1, M):
-        d = segments[i]
-        s_choose = score[prev[i]] + occ[d]
-        s_ignore = score[i-1]
-        score[i] = max(s_choose, s_ignore)
+#     # weighted interval scheduling dynamic program
+#     cdef np.ndarray[np.int_t, ndim=1] score = np.zeros(M, dtype=int)
+#     for i in range(1, M):
+#         d = segments[i]
+#         s_choose = score[prev[i]] + occ[d]
+#         s_ignore = score[i-1]
+#         score[i] = max(s_choose, s_ignore)
 
-    cdef list consensus = []
-    j = M - 1
-    while j > 0:
-        if score[j] != score[j-1]:
-            consensus.append(segments[j])
-            j = prev[j]
-        else:
-            j -= 1
+#     cdef list consensus = []
+#     j = M - 1
+#     while j > 0:
+#         if score[j] != score[j-1]:
+#             consensus.append(segments[j])
+#             j = prev[j]
+#         else:
+#             j -= 1
 
-    return consensus[::-1]
+#     return consensus[::-1]
 
 
 ###
@@ -285,15 +327,24 @@ cpdef np.ndarray[np.double_t, ndim=1] log_forward(
         int end,
         int maxsize=-1):
     """
-    Forward algorithm.
+    Log forward subpartition functions.
 
-    Input:
-        Eseg - segment energy matrix
-        beta - inverse temperature
-        start, end
+    Input
+    -----
+    Eseg : 2d-array 
+        segment energy matrix
+    beta : float
+        inverse temperature
+    start, end: int
+        first and last bin egdes to consider
+    maxsize: int (experimental)
+        maximum domain size to allow
 
-    Returns:
-        Lf (array) - forward statistical weights, length (end - start)
+    Returns
+    -------
+    Lf : 1d-array
+        Log of sum of statistical weights of segmentation ensembles starting at
+        ``start``.
 
     """
     cdef int N = len(Eseg) - 1 # number of nodes
@@ -344,15 +395,24 @@ cpdef np.ndarray[np.double_t, ndim=1] log_backward(
         int end,
         int maxsize=-1):
     """
-    Backward algorithm.
+    Log backward subpartition functions.
 
-    Input:
-        Eseg - segment energy matrix
-        beta - inverse temperature
-        start, end
+    Input
+    -----
+    Eseg : 2d-array 
+        segment energy matrix
+    beta : float
+        inverse temperature
+    start, end: int
+        first and last bin egdes to consider
+    maxsize: int (experimental)
+        maximum domain size to allow
 
-    Returns:
-        Lb (array) - forward statistical weights, length (end - start)
+    Returns
+    -------
+    Lb : 1d-array
+        Log of sum of statistical weights of segmentation ensembles ending at
+        ``end``.
 
     """
     cdef int N = len(Eseg) - 1 # n nodes
@@ -474,17 +534,20 @@ cpdef np.ndarray[np.double_t, ndim=2] log_zmatrix(
     np.ndarray[np.double_t, ndim=2] Eseg, 
     double beta):
     """
-    Lz = log_zmatrix(Eseg, beta)
-
-    Compute the subsystem statistical weight matrix.
+    Log subsystem partition function matrix.
     
-    Input:
-        Eseg:  segment energy matrix
-        beta:  inverse temperature
+    Input
+    -----
+    Eseg : 2d-array
+        segment energy matrix
+    beta : float
+        inverse temperature
 
-    Returns:
-        ln(Z), where
-        Z[a,b] = sum of statistical weights corresponding to subsystem [a,b)
+    Returns
+    -------
+    Lz : 2d-array
+        log(Z) where Z[i,j] is the sum of statistical weights corresponding to 
+        the set of subsegmentations between bin edges ``i`` and ``j``.
 
     """
     cdef int N = len(Eseg) - 1 # n nodes
@@ -505,52 +568,63 @@ cpdef np.ndarray[np.double_t, ndim=2] log_zmatrix(
 
 
 @cython.embedsignature(True)
-def log_boundary_marginal(np.ndarray[np.double_t, ndim=2] Eseg, double beta, int start, int end):
+def log_boundary_marginal(
+        np.ndarray[np.double_t, ndim=2] Eseg, 
+        double beta):
     """
-    Lb = log_boundary_marginal(Eseg, beta, start, end)
+    Log of marginal domain boundary statistical weight sums.
 
-    Input:
-        Eseg - segment energy matrix
-        beta - inverse temperature
-        start, end
+    Input
+    -----
+    Eseg : 2d-array
+        segment energy matrix
+    beta : float
+        inverse temperature
 
-    Returns:
-        Lz[i] = sum of statistical weights of all segmentations having i as a
-                segment boundary.
+    Returns
+    -------
+    Lz[i] : 1d-array
+        Log of sum of statistical weights of all segmentations having ``i`` as
+        a domain boundary.
 
     """
-    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(Eseg, beta, start, end)
-    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(Eseg, beta, start, end)
+    cdef int N = len(Eseg) - 1
+    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(Eseg, beta, 0, N)
+    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(Eseg, beta, 0, N)
     return Lf + Lb
 
 
 @cython.embedsignature(True)
-def log_segment_marginal(np.ndarray[np.double_t, ndim=2] Eseg, double beta):
+def log_segment_marginal(
+        np.ndarray[np.double_t, ndim=2] Eseg,
+        double beta):
     """
-    Ls = log_segment_marginal(Eseg, beta)
+    Log of marginal domain statistical weight sums.
 
-    Input:
-        Eseg - segment energy matrix
-        beta - inverse temperature
+    Input
+    -----
+    Eseg : 2d-array
+        segment energy matrix
+    beta : float
+        inverse temperature
 
-    Returns:
-        Ls[a,b] = sum of statistical weights of all segmentations containing the
-                  segment [a,b).
+    Returns
+    -------
+    Ls[a,b] : 2d-array 
+        Log of sum of statistical weights of all segmentations containing the
+        domain [a,b).
+
+    Notes
+    -----
+    The main diagonal is filled with the boundary marginals.
+    Interpretation: trivial domains [a,a) are identical to single boundary 
+    occurrences.
 
     """
-    # NOTE: the diagonal contains the boundary marginal 
-    # Interpretation: trivial segments [i,i) are single boundary occurrences.
-    cdef int N = len(Eseg) - 1 # n nodes
+    cdef int N = len(Eseg) - 1
     cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(Eseg, beta, 0, N)
     cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(Eseg, beta, 0, N)
-    
-    cdef np.ndarray[np.double_t, ndim=2] Lms = np.zeros((N+1, N+1))
-    cdef int i, j
-    for i in range(N+1):
-        for j in range(i, N+1):
-            Lms[i,j] = Lms[j,i] = Lf[i] - beta*Eseg[i, j] + Lb[j]
-    
-    return Lms
+    return log_segment_marginal__from_forward_backward(Eseg, beta, Lf, Lb)
 
 
 @cython.embedsignature(True)
@@ -560,149 +634,179 @@ def log_segment_marginal__from_forward_backward(
         np.ndarray[np.double_t, ndim=1] Lf,
         np.ndarray[np.double_t, ndim=1] Lb):
     """
-    Input:
-        Eseg - segment energy matrix
-        beta - inverse temperature
+    Input
+    -----
+    Eseg : 2d-array
+        segment energy matrix
+    beta : float
+        inverse temperature
+    Lf: 1d-array
+        log forward statistical weights
+    Lb: 1d-array
+        log backward statistical weights
 
-    Returns:
-        Ls[a,b] = sum of statistical weights of all segmentations containing the
-                  segment [a,b).
+    Returns
+    -------
+    Ls[a,b] : 2d-array 
+        Log of sum of statistical weights of all segmentations containing the
+        domain [a,b).
+
+    Notes
+    -----
+    The main diagonal is filled with the boundary marginals.
+    Interpretation: trivial domains [a,a) are identical to single boundary 
+    occurrences.
 
     """
-    # NOTE: the diagonal contains the boundary marginal 
-    # Interpretation: trivial segments [i,i) are single boundary occurrences.
-    cdef int N = len(Eseg) - 1 # n nodes    
+    cdef int N = len(Eseg) - 1
     cdef np.ndarray[np.double_t, ndim=2] Ls = np.zeros((N+1, N+1))
     cdef int i, j
     for i in range(N+1):
         for j in range(i, N+1):
             Ls[i,j] = Ls[j,i] = Lf[i] - beta*Eseg[i, j] + Lb[j]
-    
     return Ls
 
 
 @cython.embedsignature(True)
-def log_boundary_cooccur_marginal(np.ndarray[np.double_t, ndim=2] Eseg, double beta):
+def log_boundary_cooccur_marginal(
+        np.ndarray[np.double_t, ndim=2] Eseg, 
+        double beta):
     """
-    Lbb = log_boundary_cooccur_marginal(Eseg, beta)
+    Log of statistical weight sums for pairs of bin edges simultaneously
+    occurring as domain boundaries.
 
-    Input:
-        Eseg - segment energy matrix
-        beta - inverse temperature
+    Input
+    -----
+    Eseg : 2d-array
+        segment energy matrix
+    beta : float
+        inverse temperature
 
-    Returns:
-        Lbb[i,j] = sum of statistical weights of all segmentations in which
-                   both i and j occur as segment boundaries
+    Returns
+    -------
+    Lbb[i,j] : 2d-array
+        Log of sum of statistical weights of all segmentations in which both
+        ``i`` and ``j`` occur as domain boundaries.
+
+    Notes
+    -----
+    The main diagonal is filled with the boundary marginals.
+    Interpretation: Every boundary always co-occurs with itself.
 
     """
-    # NOTE: the diagonal contains the boundary marginal (assuming Lz[i,i]==0)
-    # Interpretation:  Boundary occurrences co-occur with themselves.
-    cdef int N = len(Eseg) - 1 #nodes
     cdef np.ndarray[np.double_t, ndim=2] Lz = log_zmatrix(Eseg, beta)
-     
-    cdef np.ndarray[np.double_t, ndim=2] Lbb = np.zeros((N+1,N+1))
-    cdef int i, j
-    for i in range(N+1):
-        for j in range(i, N+1):
-            Lbb[i,j] = Lbb[j,i] = Lz[0, i] + Lz[i, j] + Lz[j, N]
-    
-    return Lbb
+    return log_boundary_cooccur_marginal__from_zmatrix(Lz)
 
 
 @cython.embedsignature(True)
-def log_boundary_cooccur_marginal__from_zmatrix(
-        np.ndarray[np.double_t, ndim=2] Eseg, 
-        double beta,
+cpdef log_boundary_cooccur_marginal__from_zmatrix(
         np.ndarray[np.double_t, ndim=2] Lz):
     """
-    Lbb = log_boundary_cooccur_marginal(Eseg, beta)
+    Input
+    -----
+    Lz: 2d-array
+        Log of the subsystem statistical weight matrix.
 
-    Input:
-        Eseg - segment energy matrix
-        beta - inverse temperature
+    Returns
+    -------
+    Lbb[i,j] : 2d-array
+        Log of sum of statistical weights of all segmentations in which both
+        ``i`` and ``j`` occur as domain boundaries.
 
-    Returns:
-        Lbb[i,j] = sum of statistical weights of all segmentations in which
-                   both i and j occur as segment boundaries
+    Notes
+    -----
+    The main diagonal is filled with the boundary marginals.
+    Interpretation: Any boundary always co-occurs with itself.
 
     """
-    # NOTE: the diagonal contains the boundary marginal (assuming Lz[i,i]==0)
-    # Interpretation:  Boundary occurrences co-occur with themselves.
-    cdef int N = len(Eseg) - 1 #nodes     
+    cdef int N = len(Lz) - 1  
     cdef np.ndarray[np.double_t, ndim=2] Lbb = np.zeros((N+1,N+1))
     cdef int i, j
     for i in range(N+1):
         for j in range(i, N+1):
             Lbb[i,j] = Lbb[j,i] = Lz[0, i] + Lz[i, j] + Lz[j, N]
-    
     return Lbb
 
 
 @cython.embedsignature(True)
-def log_segment_cooccur_marginal(np.ndarray[np.double_t, ndim=2] Eseg, double beta):
+def log_segment_cooccur_marginal(
+        np.ndarray[np.double_t, ndim=2] Eseg, 
+        double beta):
     """
-    Lss = log_segment_cooccur_marginal(Eseg, beta)
+    Log of statistical weight sums for pairs of bins co-occurring within the
+    same domain.
 
-    Input:
-        Eseg - segment energy matrix
-        beta - inverse temperature
+    Input
+    -----
+    Eseg : 2d-array
+        segment energy matrix
+    beta : float
+        inverse temperature
 
-    Returns:
-        Lbb[p,q] = sum of statistical weights of all segmentations in which
-                   p and q occur within the same segment
+    Returns
+    -------
+    Lbb[p,q] : 2d-array
+        Log of sum of statistical weights of all segmentations in which ``p`` 
+        and ``q`` occur within the same domain.
+
+    Notes
+    -----
+    The main diagonal is filled with the partition function Z. 
+    Interpretation: Each bin is always in the same domain as itself.
 
     """
-    # NOTE: the diagonal contains the partition function Z.
-    # Interpretation: Each node is always in the same segment as itself.
-    cdef int N = len(Eseg) - 1
     cdef np.ndarray[np.double_t, ndim=2] Ls = log_segment_marginal(Eseg, beta)
-    cdef double Ls_max = Ls.max()
+    return log_segment_cooccur_marginal__from_segment_marginal(Ls)
 
-    cdef np.ndarray[np.double_t, ndim=2] Zseg = np.exp(Ls - Ls_max)
-    cdef double Z = Zseg[0, 0]
+    # cdef double Ls_max = Ls.max()
+
+    # cdef np.ndarray[np.double_t, ndim=2] Zseg = np.exp(Ls - Ls_max)
+    # cdef double Z = Zseg[0, 0]
     
-    cdef np.ndarray[np.double_t, ndim=2] Zcos = np.zeros((N,N), dtype=float)
-    cdef double s
-    cdef int i, j
-    # j: N-1
-    Zcos[0, N-1] = Zcos[N-1, 0] = Zseg[0, N]
-    for i in range(1, N-1):
-        Zcos[i, N-1] = Zcos[N-1, i] = Zcos[i-1, N-1] + Zseg[i, N]
-    Zcos[N-1, N-1] = Z
-    # j: N-2 to 1
-    for j in range(N-2, 0, -1):
-        s = Zseg[0, j+1]
-        Zcos[0, j] = Zcos[j, 0] = Zcos[0, j+1] + s
-        for i in range(1, j):
-            s = s + Zseg[i, j+1]
-            Zcos[i, j] = Zcos[j, i] = Zcos[i, j+1] + s
-        Zcos[j, j] = Z
-    # j: 0
-    Zcos[0, 0] = Z
+    # cdef np.ndarray[np.double_t, ndim=2] Zcos = np.zeros((N,N), dtype=float)
+    # cdef double s
+    # cdef int i, j
+    # # j: N-1
+    # Zcos[0, N-1] = Zcos[N-1, 0] = Zseg[0, N]
+    # for i in range(1, N-1):
+    #     Zcos[i, N-1] = Zcos[N-1, i] = Zcos[i-1, N-1] + Zseg[i, N]
+    # Zcos[N-1, N-1] = Z
+    # # j: N-2 to 1
+    # for j in range(N-2, 0, -1):
+    #     s = Zseg[0, j+1]
+    #     Zcos[0, j] = Zcos[j, 0] = Zcos[0, j+1] + s
+    #     for i in range(1, j):
+    #         s = s + Zseg[i, j+1]
+    #         Zcos[i, j] = Zcos[j, i] = Zcos[i, j+1] + s
+    #     Zcos[j, j] = Z
+    # # j: 0
+    # Zcos[0, 0] = Z
     
-    return Ls_max + np.log(Zcos)
+    # return Ls_max + np.log(Zcos)
 
 
 @cython.embedsignature(True)
-def log_segment_cooccur_marginal__from_segment_marginal(
-        np.ndarray[np.double_t, ndim=2] Eseg, 
-        double beta,
+cpdef log_segment_cooccur_marginal__from_segment_marginal(
         np.ndarray[np.double_t, ndim=2] Ls):
     """
-    Lss = log_segment_cooccur_marginal(Eseg, beta)
+    Input
+    -----
+    Ls: 2d-array
+        log of the domain marginal matrix
 
-    Input:
-        Eseg - segment energy matrix
-        beta - inverse temperature
+    Returns
+    -------
+    Lbb[p,q] : 2d-array
+        Sum of statistical weights of all segmentations in which ``p`` and
+        ``q`` occur within the same domain.
 
-    Returns:
-        Lbb[p,q] = sum of statistical weights of all segmentations in which
-                   p and q occur within the same segment
+    Notes
+    -----
+    The main diagonal is filled with the partition function Z. 
+    Interpretation: Each bin is always in the same domain as itself.
 
     """
-    # NOTE: the diagonal contains the partition function Z.
-    # Interpretation: Each node is always in the same segment as itself.
-    cdef int N = len(Eseg) - 1
+    cdef int N = len(Ls) - 1
     cdef double Ls_max = Ls.max()
 
     cdef np.ndarray[np.double_t, ndim=2] Zs = np.exp(Ls - Ls_max)
@@ -730,35 +834,44 @@ def log_segment_cooccur_marginal__from_segment_marginal(
     return Ls_max + np.log(Zss)
 
 
-@cython.boundscheck(False)
+#@cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def log_contactmap_from_insulation_prob(
-        np.ndarray[np.double_t, ndim=1] p_insul):
+@cython.embedsignature(True)
+cpdef log_project_insul(np.ndarray[np.double_t, ndim=1] pi):
+    """
+    Project a 1-D insulation profile ``pi`` into a heatmap ``P`` according to 
+    the multiplicative model: P[i,j] = prod_{i<=k<-j}(1 - pi[k]).
 
-    cdef np.ndarray[np.double_t, ndim=1] log_pc = np.log(1 - p_insul)
-    
-    # N bins, n bin edges
-    cdef int N = len(log_pc) - 1
-    cdef int n = N+1 
+    Input
+    -----
+    pi : array
+        Insulation score for each bin or bin edge, between 0 and 1.
+
+    Returns
+    -------
+    L = log(P)
+
+    """
+    # n bin edges or bins
+    cdef n = len(pi) 
     cdef np.ndarray[np.double_t, ndim=2] L = np.zeros((n, n), dtype=float)
     cdef int i, diag
 
-    # base case (first two diagonals) 
-    # XXX --- leave out the main diag for consistency?
-    for i in range(0, n):
-        L[i, i] = log_pc[i]
+    lpi = np.log(pi)
 
-    # first diag
+    # base case: 0th diag
+    # XXX - leave out main diag for consistency with other matrices?
+    for i in range(0, n):
+        L[i, i] = lpi[i]
+
+    # base case: 1st diag
     for i in range(0, n-1):
-        L[i, i+1] \
-            = L[i+1, i] \
-            = log_pc[i] + log_pc[i+1]
+        L[i, i+1] = L[i+1, i] = lpi[i] + lpi[i+1]
 
     for diag in range(2, n):
         for i in range(0, n-diag):
             L[i, i+diag] \
                 = L[i+diag, i] \
                 = L[i, i+diag-1] + L[i+1, i+diag] - L[i+1, i+diag-1]
-
     return L

@@ -7,12 +7,8 @@ from . import utils
 
 class SegModel(object):
     def __init__(self, S, edgemask=None):
-        if edgemask is not None:
-            self.edgemask = edgemask
-        else: 
-            self.edgemask = ~np.isnan(S.diagonal())
-
-        if np.any(self.edgemask):
+        self.edgemask = edgemask
+        if edgemask is not None and np.any(edgemask):
             self.score_matrix = utils.mask_compress(S, self.edgemask)
         else:
             self.score_matrix = S
@@ -90,7 +86,7 @@ class SegModel(object):
         Lf = log_forward(Eseg, beta, 0, self.n_bins)
         Lb = log_backward(Eseg, beta, 0, self.n_bins)
         Ls = log_segment_marginal__from_forward_backward(Eseg, beta, Lf, Lb)
-        Lss = log_segment_cooccur_marginal__from_segment_marginal(Eseg, beta, Ls)
+        Lss = log_segment_cooccur_marginal__from_segment_marginal(Ls)
         Pss = np.exp(Lss - Lss[-1,-1])
         if self.edgemask is not None:
             Pss = utils.mask_restore(Pss, self.edgemask[:-1])

@@ -93,7 +93,7 @@ setup(
     setup_requires=['numpy'],
     install_requires=['numpy'],
     zip_safe=False,
-    include_package_data=True,
+    # include_package_data=True,
     # package_data={
     #     'sample': ['package_data.dat'],
     # },

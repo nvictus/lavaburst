@@ -9,6 +9,14 @@ where = np.flatnonzero
 from .core.utils import fill_triu_inplace, fill_tril_inplace
 
 
+def where_diagonal(A, k=0):
+    N = A.shape[0]
+    if k >= 0:
+        return np.arange(0, N-k), np.arange(k, N)
+    else:
+        return np.arange(-k, N), np.arange(0, N+k)
+
+
 def deprecated(func, replacement=None):
     # based on http://code.activestate.com/recipes/577819-deprecated-decorator/
     # from Giampaolo Rodola (MIT licensed)

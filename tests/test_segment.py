@@ -20,7 +20,7 @@ def test_sums_by_segment():
         for j in xrange(i, n+1):
             Zseg[i,j] = Zseg[j,i] = np.sum(A[i:j,i:j]/2.0)
     assert np.allclose(scoring.sums_by_segment(A), Zseg)
-    assert np.allclose(scoring.normalized_sums_by_segment(A), Zseg/Zseg[0,n])
+    assert np.allclose(scoring.sums_by_segment(A, normalized=True), Zseg/Zseg[0,n])
 
 
 class BruteForceEnsemble(object):
@@ -168,8 +168,8 @@ class BruteForceEnsemble(object):
 
 N = len(A)
 k = A.sum(axis=0)
-Zseg = scoring.normalized_sums_by_segment(A)
-Znull = scoring.normalized_sums_by_segment(np.outer(k,k))
+Zseg = scoring.sums_by_segment(A, normalized=True)
+Znull = scoring.sums_by_segment(np.outer(k,k), normalized=True)
 Eseg = -Zseg + Znull
 e = BruteForceEnsemble(Zseg - Znull)
 
@@ -199,7 +199,7 @@ def test_log_zmatrix():
     assert np.allclose(e.log_zmatrix(1), segment.log_zmatrix(Eseg, 1))
 
 def test_log_boundary_marginal():
-    assert np.allclose(e.log_boundary_marginal(1), segment.log_boundary_marginal(Eseg, 1, 0, N))
+    assert np.allclose(e.log_boundary_marginal(1), segment.log_boundary_marginal(Eseg, 1))
 
 def test_log_segment_marginal():
     assert np.allclose(e.log_segment_marginal(1), segment.log_segment_marginal(Eseg, 1))
