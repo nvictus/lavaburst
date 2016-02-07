@@ -232,7 +232,7 @@ def tilt_heatmap(A, n_diags=None, pad=np.nan):
         n_diags = N
 
     T = np.ones((n_diags, N))*pad
-    for k in xrange(n_diags):
+    for k in range(n_diags):
         T[k, k//2 : N-(k+1)//2] = A.diagonal(k)
 
     return T
@@ -243,8 +243,8 @@ def blocks(N, segments, lower=True, upper=False, labels=None, offset=0):
         labels = [0]*len(segments)
     mat = -np.ones((N,N), dtype=float)
     for k, (start, stop) in enumerate(segments):
-        for i in xrange(start, stop):
-            for j in xrange(i, stop):
+        for i in range(start, stop):
+            for j in range(i, stop):
                 if i >= offset and j < (stop - offset):
                     if upper:
                         mat[i,j] = labels[k]
@@ -259,7 +259,7 @@ def checkerboard(labels, lower=True, upper=False, offset=0):
     mat = np.nan*np.ones((N,N), dtype=float)
 
     n_labels = max(labels)
-    mmap = [ where(labels==c) for c in xrange(0, n_labels+1) ]
+    mmap = [ where(labels==c) for c in range(0, n_labels+1) ]
     for c, members in enumerate(mmap):
         for i in members:
             mat[i,i] = c
