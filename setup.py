@@ -1,47 +1,47 @@
 # -*- encoding: utf-8 -*-
 from setuptools import setup, find_packages, Extension
-from os import path
 import glob
 import ast
+import os
 import io
 import re
 
 try:
     from Cython.Distutils import build_ext as _build_ext
     from Cython.Build import cythonize
-    USE_CYTHON = True
+    HAVE_CYTHON = True
 except ImportError:
     from setuptools.command.build_ext import build_ext as _build_ext
-    USE_CYTHON = False
+    HAVE_CYTHON = False
 
 
 classifiers = """
-    Development Status :: 1 - Planning
-    License :: OSI Approved :: MIT License
-    Topic :: Scientific/Engineering
-    Topic :: Scientific/Engineering :: Bio-Informatics
+    Development Status :: 4 - Beta
+    Operating System :: OS Independent
     Programming Language :: Python
     Programming Language :: Python :: 2
     Programming Language :: Python :: 2.7
-    Operating System :: Unix
-    Operating System :: POSIX
-    Operating System :: MacOS :: MacOS X
+    Programming Language :: Python :: 3
+    Programming Language :: Python :: 3.3
+    Programming Language :: Python :: 3.4
+    Programming Language :: Python :: 3.5
 """
 
 
 def _read(*parts, **kwargs):
-    return io.open(
-        path.join(path.dirname(__file__), *parts),
-        encoding=kwargs.pop('encoding', 'utf-8')
-    ).read()
+    filepath = os.path.join(os.path.dirname(__file__), *parts)
+    encoding = kwargs.pop('encoding', 'utf-8')
+    with io.open(filepath, encoding=encoding) as fh:
+        text = fh.read()
+    return text
 
 
 def get_version():
-    # Version parsing from __init__ pulled from Flask's setup.py
-    # https://github.com/mitsuhiko/flask/blob/master/setup.py
-    _version_re = re.compile(r'__version__\s+=\s+(.*)')
-    hit = _version_re.search(_read('lavaburst', '__init__.py')).group(1)
-    return str(ast.literal_eval(hit))
+    version = re.search(
+        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+        _read('lavaburst', '__init__.py'),
+        re.MULTILINE).group(1)
+    return version
 
 
 def get_long_description():
@@ -49,15 +49,15 @@ def get_long_description():
 
 
 def get_ext_modules():
-    ext = '.pyx' if USE_CYTHON else '.c'
-    src_files = glob.glob(path.join("lavaburst", "core", "*" + ext))
+    ext = '.pyx' if HAVE_CYTHON else '.c'
+    src_files = glob.glob(os.path.join("lavaburst", "core", "*" + ext))
 
     ext_modules = []
     for src_file in src_files:
-        name = "lavaburst.core." + path.splitext(path.basename(src_file))[0]
+        name = "lavaburst.core." + os.path.splitext(os.path.basename(src_file))[0]
         ext_modules.append(Extension(name, [src_file]))
 
-    if USE_CYTHON:
+    if HAVE_CYTHON:
         # .pyx to .c
         ext_modules = cythonize(ext_modules)  #, annotate=True
 
@@ -76,6 +76,13 @@ class build_ext(_build_ext):
         self.include_dirs.append(numpy.get_include())
 
 
+install_requires = ['six', 'numpy', 'scipy', 'cython']
+tests_require = ['nose']
+extras_require = {
+    'docs': ['Sphinx>=1.1', 'numpydoc>=0.5'],
+}
+
+
 setup(
     name='lavaburst',
     version=get_version(),
@@ -90,8 +97,9 @@ setup(
     packages=find_packages(),
     ext_modules = get_ext_modules(),
     cmdclass = {'build_ext': build_ext},
-    setup_requires=['numpy'],
-    install_requires=['numpy'],
+    install_requires=install_requires,
+    tests_require=tests_require,
+    extras_require=extras_require,
     zip_safe=False,
     # include_package_data=True,
     # package_data={

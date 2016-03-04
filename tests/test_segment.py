@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 from nose.tools import with_setup, assert_raises, assert_equal
 
 import itertools
@@ -16,8 +16,8 @@ A[np.diag_indices_from(A)] = 0
 def test_sums_by_segment():
     n = len(A)
     Zseg = np.zeros((n+1,n+1))
-    for i in xrange(n+1):
-        for j in xrange(i, n+1):
+    for i in range(n+1):
+        for j in range(i, n+1):
             Zseg[i,j] = Zseg[j,i] = np.sum(A[i:j,i:j]/2.0)
     assert np.allclose(scoring.sums_by_segment(A), Zseg)
     assert np.allclose(scoring.sums_by_segment(A, normalized=True), Zseg/Zseg[0,n])
@@ -32,7 +32,7 @@ class BruteForceEnsemble(object):
         assert start < stop
         assert stop <= self.n_nodes
         n = stop - start
-        values = [(1,)] + [(0,1) for _ in xrange(n-1)] + [(1,)]
+        values = [(1,)] + [(0,1) for _ in range(n-1)] + [(1,)]
         bitstrs = itertools.product(*values)
         if as_bool:
             for b in bitstrs:
@@ -60,7 +60,7 @@ class BruteForceEnsemble(object):
         N = self.n_nodes
         Lf = np.zeros(N+1)
         Lf[0] = 0.0 #prob of first boundary = 1
-        for t in xrange(1, N+1):
+        for t in range(1, N+1):
             z = 0.0
             for s in self.iter_states(0, t):
                 score = self.score_state(s)
@@ -72,7 +72,7 @@ class BruteForceEnsemble(object):
         N = self.n_nodes
         Lb = np.zeros(N+1)
         Lb[N] = 0.0 #prob of last boundary = 1
-        for t in xrange(N-1,-1,-1):
+        for t in range(N-1,-1,-1):
             z = 0.0
             for s in self.iter_states(t, N):
                 score = self.score_state(s)
@@ -83,9 +83,9 @@ class BruteForceEnsemble(object):
     def log_zmatrix(self, beta):
         N = self.n_nodes
         Lz = np.zeros((N+1,N+1))
-        for t1 in xrange(0, N+1):
+        for t1 in range(0, N+1):
             Lz[t1,t1] = 0.0
-            for t2 in xrange(t1+1, N+1):
+            for t2 in range(t1+1, N+1):
                 z = 0.0
                 for s in self.iter_states(t1, t2):
                     score = self.score_state(s)
@@ -97,7 +97,7 @@ class BruteForceEnsemble(object):
         N = self.n_nodes
         M = np.zeros(N+1)
         for b in self.iter_states(0, N, as_bool=True):
-            for i in xrange(N+1):
+            for i in range(N+1):
                 if b[i] == 1:
                     score = self.score_state(where(b))
                     M[i] += np.exp(beta*score)
@@ -108,8 +108,8 @@ class BruteForceEnsemble(object):
         M = np.zeros((N+1,N+1))
         for b in self.iter_states(0, N, as_bool=True):
             score = self.score_state(where(b))
-            for i in xrange(N+1):
-                for j in xrange(N+1):
+            for i in range(N+1):
+                for j in range(N+1):
                     if b[i] == 1 and b[j] == 1:
                         M[i,j] += np.exp(beta*score)
         return np.log(M)
@@ -119,11 +119,11 @@ class BruteForceEnsemble(object):
         M = np.zeros((N+1,N+1))
         for b in self.iter_states(0, N, as_bool=True):
             score = self.score_state(where(b))
-            for i in xrange(N+1):
+            for i in range(N+1):
                 if b[i] == 1:
                     # put boundary marginals on the diagonal
                     M[i,i] += np.exp(beta*score)
-                for j in xrange(i+1, N+1):
+                for j in range(i+1, N+1):
                     if b[i] == 1 and b[j] == 1 and np.all(b[i+1:j]==0):
                         M[i,j] += np.exp(beta*score)
                         M[j,i] = M[i,j]
@@ -134,9 +134,9 @@ class BruteForceEnsemble(object):
         M = np.zeros((N,N))
         for b in self.iter_states(0, N, as_bool=True):
             score = self.score_state(where(b))
-            for i in xrange(N):
+            for i in range(N):
                 M[i,i] += np.exp(beta*score)
-                for j in xrange(i+1, N):
+                for j in range(i+1, N):
                     if np.all(b[i+1:j+1] == 0):
                         M[i,j] += np.exp(beta*score)
                         M[j,i] = M[i,j]
@@ -175,7 +175,7 @@ e = BruteForceEnsemble(Zseg - Znull)
 
 def print_pair(A,B):
     for a,b in zip(A.flat, B.flat):
-        print a, b
+        print(a, b)
 
 def test_optimal_segmentation():
     path, opt = segment.optimal_segmentation(Zseg-Znull)

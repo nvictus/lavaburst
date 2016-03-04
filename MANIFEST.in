@@ -1,13 +1,17 @@
 include CHANGES.md
+include README.md
 include LICENSE
-include README.rst
 
-graft docs
 graft tests
-graft example
-graft lavaburst
+graft docs
+prune docs/_build
+prune docs/_static
+prune docs/_templates
 
-prune docs/build
-
+global-exclude __pycache__/*
+global-exclude *.so
+global-exclude *.pyd
 global-exclude *.pyc
-global-exclude *.pyo
+global-exclude .git*
+global-exclude .deps/*
+global-exclude .DS_Store
