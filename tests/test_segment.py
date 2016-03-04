@@ -1,4 +1,5 @@
 from __future__ import division, print_function
+from six.moves import xrange as range
 from nose.tools import with_setup, assert_raises, assert_equal
 
 import itertools
