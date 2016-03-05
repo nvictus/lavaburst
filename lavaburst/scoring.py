@@ -31,7 +31,7 @@ def _corner_matrices(A):
     return Sval, Ssign, Svar
 
 
-def corner_score(A, gamma=1, trim_diags=10, binmask=None, **kw):
+def corner_score(A, gamma=1, trim_diags=3, binmask=None, **kw):
     N = A.shape[0]
     Sval, Ssign, Svar = _corner_matrices(A)
     S = (Sval/Sval.max() + Ssign/Ssign.max() - Svar) / 3.
@@ -46,7 +46,7 @@ def corner_score(A, gamma=1, trim_diags=10, binmask=None, **kw):
     return S
 
 
-def variance_score(A, gamma=1, trim_diags=10, binmask=None):
+def variance_score(A, gamma=1, trim_diags=3, binmask=None):
     N = A.shape[0]
     B = np.log10(np.clip(A, A[A>0].min(), A.max()))
     B += np.abs(B.min())

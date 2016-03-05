@@ -6,6 +6,7 @@ ehthumbs.db
 Thumbs.db
 
 # general things to ignore
+.ipynb_checkpoints/
 __pycache__/
 *.py[cod]
 *.so

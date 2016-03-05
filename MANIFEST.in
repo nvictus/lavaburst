@@ -1,5 +1,5 @@
 include CHANGES.md
-include README.md
+include README.rst
 include LICENSE
 
 graft tests
