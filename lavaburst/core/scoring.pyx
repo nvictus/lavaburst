@@ -223,24 +223,17 @@ cpdef np.ndarray[np.double_t, ndim=2] aggregate_arrowhead_dn(
 #     return U
 
 
-def logbins(start, stop, factor):
-    # from mirnylib.numutils
+def geomrange(start, stop, factor, include_end=True):
     from math import log
-    a = int(start)
-    b = int(stop)
-    beg = log(start)
-    end = log(stop - 1)
-    pace = log(factor)
-    N = int((end - beg) / pace)
-    pace = (end - beg) / N
-    mas = np.arange(beg, end + 0.000000001, pace)    
-    ret = np.exp(mas)
-    surpass = np.arange(a,a+N)
-    replace = surpass > ret[:N]-1
-    ret[replace] = surpass  
-    ret = np.array(ret, dtype = np.int)
-    ret[-1] = b 
-    return list(ret)
+    a, b = int(start), int(stop)
+    log_start, log_stop = log(a), log(b) 
+    n_steps = int((log_stop - log_start) / log(factor))
+    step = (log_stop - log_start) / n_steps
+    log_range = np.arange(log_start, log_stop, step)
+    bins = np.unique(np.round(np.exp(log_range))).astype(int)
+    if include_end and bins[-1] != b:
+        bins = np.r_[bins, b]
+    return bins
 
 
 #@cython.boundscheck(False)
@@ -253,32 +246,29 @@ def sep_mean(A, mask=None):
     distance, over regions where mask==1.
 
     """
-    _data = np.array(A, dtype=float)
+    cdef N = A.shape[0]
+    cdef np.ndarray[np.double_t, ndim=2] data = A.astype(float)
+    cdef np.ndarray[np.int_t, ndim=2] datamask
     if mask is None:
-        _datamask = np.ones(A.shape, dtype=int)
+        datamask = np.ones(A.shape, dtype=int)
     else:
-        _datamask = np.array(mask == 1, dtype=int)
-    
-    cdef np.ndarray[np.double_t, ndim=2] data = _data 
-    cdef np.ndarray[np.int_t, ndim=2] datamask = _datamask 
-    cdef N = data.shape[0]
+        datamask = np.array(mask == 1, dtype=int)
 
-    _bins = logbins(1, N, 1.05)
-    _bins = [(0, 1)] + [(_bins[k], _bins[k+1]) for k in range(len(_bins)-1)]
-    _bins = np.array(_bins, dtype=int)
-    cdef np.ndarray[np.int64_t, ndim = 2] bins = _bins
+    cdef np.ndarray[np.int64_t, ndim = 2] bins
+    _bins = geomrange(1, N, 1.05)
+    _bins = [(0, 1)] + list(zip(_bins[:-1], _bins[1:]))
+    bins = np.array(_bins, dtype=int)
 
-    cdef int M = len(bins)
     cdef np.ndarray[np.double_t, ndim=1] avg = np.zeros(N, dtype=float)
     cdef int i, j, start, end, count, offset
-    cdef double ss, meanss  
-    for i in range(M):
+    cdef double ss, meanss
+    for i in range(len(bins)):
         start, end = bins[i, 0], bins[i, 1]
         ss = 0.0
         count = 0
         for offset in range(start, end):
             for j in range(0, N-offset):
-                if datamask[offset+j, j] == 1:                    
+                if datamask[offset+j, j] == 1:
                     ss += data[offset+j, j]
                     count += 1
         meanss = ss / count
