@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
-from __future__ import division, print_function, unicode_literals
-
+from __future__ import division, print_function
 from scipy.linalg import toeplitz
 import numpy as np
 
@@ -112,49 +111,3 @@ def armatus_score(A, gamma, binmask=None, **kw):
 #     return S
 
 
-### 1D tracks ###
-
-def directionality_index(A, window=200):
-    N = A.shape[0]
-    di = np.zeros(N)
-    for i in range(0, N):
-        lo = max(0, i-window)
-        hi = min((i+window)+1, N)
-        b, a = A[i, i:hi].sum(), A[i, lo:i+1].sum()
-        e = (a + b)/2.0
-        if e:
-            di[i] = np.sign(b - a) * ( (a-e)**2 + (b-e)**2 ) / e
-    return di
-
-
-def directionality_bias(A, window=200):
-    N = A.shape[0]
-    di = np.zeros(N)
-    for i in range(0, N):
-        lo = max(0, i-window)
-        hi = min((i+window)+1, N)
-        s = A[i, lo:hi].sum()
-        if s:
-            di[i] = (A[i, i:hi].sum() - A[i, lo:i+1].sum()) / s
-    return di
-
-
-def insul(A, extent=200):
-    N = A.shape[0]
-    score = np.zeros(N)
-    for k in range(extent):
-        ri, rj = where_diagonal(A, k)
-        for i in range(0, N-k+1):
-            score[i+k] = A[ri[i:i+k], rj[i:i+k]]
-    return score
-
-
-def insul_diamond(A, extent=200):
-    N = A.shape[0]
-    score = np.zeros(N)
-    for i in range(0, N):
-        lo = max(0, i-w)
-        hi = min(i+w, N)
-        score[i] = A[lo:i, i:hi].sum()
-    score /= score.mean()
-    return score
