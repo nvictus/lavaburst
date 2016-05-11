@@ -8,7 +8,8 @@ import numpy as np
 where = np.flatnonzero
 
 
-from lavaburst import segment, scoring
+from lavaburst.core import algo
+from lavaburst import scoring
 
 
 A = 10*block_diag(np.ones((4,4)), np.ones((5,5)), np.ones((4,4))).astype(float)
@@ -115,7 +116,7 @@ class BruteForceEnsemble(object):
                         M[i,j] += np.exp(beta*score)
         return np.log(M)
 
-    def log_segment_marginal(self, beta):
+    def log_domain_marginal(self, beta):
         N = self.n_nodes
         M = np.zeros((N+1,N+1))
         for b in self.iter_states(0, N, as_bool=True):
@@ -130,7 +131,7 @@ class BruteForceEnsemble(object):
                         M[j,i] = M[i,j]
         return np.log(M)
 
-    def log_segment_cooccur_marginal(self, beta):
+    def log_domain_cooccur_marginal(self, beta):
         N = self.n_nodes
         M = np.zeros((N,N))
         for b in self.iter_states(0, N, as_bool=True):
@@ -169,47 +170,48 @@ class BruteForceEnsemble(object):
 
 N = len(A)
 k = A.sum(axis=0)
-Zseg = scoring.sums_by_segment(A, normalized=True)
-Znull = scoring.sums_by_segment(np.outer(k,k), normalized=True)
-Eseg = -Zseg + Znull
-e = BruteForceEnsemble(Zseg - Znull)
+Sseg = scoring.sums_by_segment(A, normalized=True)
+Snull = scoring.sums_by_segment(np.outer(k,k), normalized=True)
+S = Sseg - Snull
+e = BruteForceEnsemble(S)
 
 def print_pair(A,B):
-    for a,b in zip(A.flat, B.flat):
+    for a, b in zip(A.flat, B.flat):
         print(a, b)
 
 def test_optimal_segmentation():
-    path, opt = segment.optimal_segmentation(Zseg-Znull)
+    opt, pred = algo.maxsum(S)
+    path = algo.backtrack(opt, pred)
     s = e.optimal_segmentation()
     assert e.score_state(s) == opt[-1]
     assert np.all(s == path)
 
-def test_consenus_segmentation():
-    domains = [(1, 10), (5, 15), (1, 10), (1, 10)]
-    d = segment.consensus_segments(domains, weights=[1,1,1,1])
-    assert d == [(1, 10)]
+# def test_consenus_segmentation():
+#     domains = [(1, 10), (5, 15), (1, 10), (1, 10)]
+#     d = algo.consensus_segments(domains, weights=[1,1,1,1])
+#     assert d == [(1, 10)]
 
 def test_log_forward():
-    assert np.allclose(e.log_forward(1), segment.log_forward(Eseg, 1, 0, N))
+    assert np.allclose(e.log_forward(1), algo.log_forward(S, 1, 0, N))
 
 def test_log_backward():
-    assert np.allclose(e.log_backward(1), segment.log_backward(Eseg, 1, 0, N))
+    assert np.allclose(e.log_backward(1), algo.log_backward(S, 1, 0, N))
 
 def test_log_zmatrix():
-    print_pair(e.log_zmatrix(1), segment.log_zmatrix(Eseg, 1))
-    assert np.allclose(e.log_zmatrix(1), segment.log_zmatrix(Eseg, 1))
+    print_pair(e.log_zmatrix(1), algo.log_zmatrix(S, 1))
+    assert np.allclose(e.log_zmatrix(1), algo.log_zmatrix(S, 1))
 
 def test_log_boundary_marginal():
-    assert np.allclose(e.log_boundary_marginal(1), segment.log_boundary_marginal(Eseg, 1))
+    assert np.allclose(e.log_boundary_marginal(1), algo.log_boundary_marginal(S, 1))
 
-def test_log_segment_marginal():
-    assert np.allclose(e.log_segment_marginal(1), segment.log_segment_marginal(Eseg, 1))
+def test_log_domain_marginal():
+    assert np.allclose(e.log_domain_marginal(1), algo.log_domain_marginal(S, 1))
 
 def test_log_boundary_cooccur_marginal():
-    assert np.allclose(e.log_boundary_cooccur_marginal(1), segment.log_boundary_cooccur_marginal(Eseg, 1))
+    assert np.allclose(e.log_boundary_cooccur_marginal(1), algo.log_boundary_cooccur_marginal(S, 1))
 
-def test_log_segment_cooccur_marginal():
-    x = e.log_segment_cooccur_marginal(1)
-    y = segment.log_segment_cooccur_marginal(Eseg, 1)
+def test_log_domain_cooccur_marginal():
+    x = e.log_domain_cooccur_marginal(1)
+    y = algo.log_domain_cooccur_marginal(S, 1)
     #print_pair(x,y)
     assert np.allclose(x,y)
