@@ -153,8 +153,8 @@ def insul_diamond(A, extent=200):
     N = A.shape[0]
     score = np.zeros(N)
     for i in range(0, N):
-        lo = max(0, i-w)
-        hi = min(i+w, N)
+        lo = max(0, i-extent)
+        hi = min(i+extent, N)
         score[i] = A[lo:i, i:hi].sum()
     score /= score.mean()
     return score
