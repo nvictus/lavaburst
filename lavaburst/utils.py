@@ -30,6 +30,30 @@ def deprecated(func, replacement=None):
     return wrapped
 
 
+def rle(x):
+    """
+    Run length encoding.
+    Based on http://stackoverflow.com/a/32681075, which is based on the R rle function.
+    
+    Input
+    -----
+    x : array-like
+    
+    Returns
+    -------
+    start positions, run lengths, run values
+    
+    """
+    x = np.asarray(x)
+    n = len(x)
+    if n == 0:
+        return np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=x.dtype)
+    
+    starts = np.r_[0, np.flatnonzero(x[1:] != x[:-1]) + 1]
+    lengths = np.diff(np.r_[starts, n])
+    return starts, lengths, x[starts]
+
+
 def to_tsv(filename, df, **kwargs):
     if filename.endswith('.gz'):
         kwargs['compression'] = 'gzip'
