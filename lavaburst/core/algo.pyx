@@ -10,7 +10,7 @@ from libc.math cimport log, exp, abs
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-cpdef maxsum(np.ndarray[np.double_t, ndim=2] scoremap):
+cpdef maxsum(np.ndarray[np.double_t, ndim=2] scoremap, int maxsize=-1):
     """
     Max-sum algorithm (longest path) dynamic program on segmentation path graph
     with score matrix ``scoremap``.
@@ -31,6 +31,8 @@ cpdef maxsum(np.ndarray[np.double_t, ndim=2] scoremap):
     cdef int N = len(scoremap) - 1
     cdef np.ndarray[np.double_t, ndim=1] opt = np.zeros(N+1, dtype=float)
     cdef np.ndarray[np.int_t, ndim=1] pred = np.zeros(N+1, dtype=int)
+    if maxsize == -1:
+        maxsize = N
 
     cdef int i, k
     cdef double s
@@ -38,7 +40,7 @@ cpdef maxsum(np.ndarray[np.double_t, ndim=2] scoremap):
     for i in range(1, N+1):
         opt[i] = -np.inf
         pred[i] = i-1
-        for k in range(0, i):
+        for k in range(max(i-maxsize, 0), i):
             s = opt[k] + scoremap[k, i]
             if s > opt[i]:
                 opt[i] = s
@@ -178,8 +180,8 @@ def backtrack_local(opt, pred):
 cpdef np.ndarray[np.double_t, ndim=1] log_forward(
         np.ndarray[np.double_t, ndim=2] S,
         double beta,
-        int start,
-        int end,
+        start=None,
+        end=None,
         int maxsize=-1):
     """
     Log forward subpartition functions.
@@ -203,11 +205,15 @@ cpdef np.ndarray[np.double_t, ndim=1] log_forward(
 
     """
     cdef int N = len(S) - 1 # number of nodes
-    if start < 0 or end > N:
-        raise IndexError("start or end out of range")
+    cdef int start_ = start if start is not None else 0
+    cdef int end_ = end if end is not None else N
+    if start_ < 0 or start_ > N:
+        raise IndexError("start out of range")
+    if end_ < 0 or end_ > N:
+        raise IndexError("end out of range")
     if maxsize == -1:
         maxsize = N
-    cdef int n = end - start
+    cdef int n = end_ - start_
     cdef np.ndarray[np.double_t, ndim=1] Lfwd = np.zeros(n+1, dtype=float)
     cdef np.ndarray[np.double_t, ndim=1] a = np.zeros(n+1, dtype=float)
     cdef int t, k
@@ -217,7 +223,7 @@ cpdef np.ndarray[np.double_t, ndim=1] log_forward(
     for t in range(1, n+1):
         a_max = 0.0
         for k in range(max(t-maxsize, 0), t):
-            a[k] = Lfwd[k] + beta*S[start+k, start+t]
+            a[k] = Lfwd[k] + beta*S[start_+k, start_+t]
             if a[k] > a_max:
                 a_max = a[k]
 
@@ -245,8 +251,8 @@ cpdef np.ndarray[np.double_t, ndim=1] log_forward(
 cpdef np.ndarray[np.double_t, ndim=1] log_backward(
         np.ndarray[np.double_t, ndim=2] S,
         double beta,
-        int start,
-        int end,
+        start=None,
+        end=None,
         int maxsize=-1):
     """
     Log backward subpartition functions.
@@ -270,11 +276,15 @@ cpdef np.ndarray[np.double_t, ndim=1] log_backward(
 
     """
     cdef int N = len(S) - 1 # n nodes
-    if start < 0 or end > N:
-        raise IndexError("start or end out of range")
+    cdef int start_ = start if start is not None else 0
+    cdef int end_ = end if end is not None else N
+    if start_ < 0 or start_ > N:
+        raise IndexError("start out of range")
+    if end_ < 0 or end_ > N:
+        raise IndexError("end out of range")
     if maxsize == -1:
         maxsize = N
-    cdef int n = end - start
+    cdef int n = end_ - start_
     cdef np.ndarray[np.double_t, ndim=1] Lbwd = np.zeros(n+1, dtype=float)
     cdef np.ndarray[np.double_t, ndim=1] a = np.zeros(n+1, dtype=float)
     cdef int k, t
@@ -284,7 +294,7 @@ cpdef np.ndarray[np.double_t, ndim=1] log_backward(
     for t in range(1, n+1):
         a_max = 0.0
         for k in range(max(t-maxsize, 0), t):
-            a[k] = Lbwd[n-k] + beta*S[end-t, end-k]
+            a[k] = Lbwd[n-k] + beta*S[end_-t, end_-k]
             if a[k] > a_max:
                 a_max = a[k]
 
