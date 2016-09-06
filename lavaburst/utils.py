@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 from __future__ import division, print_function
 import itertools
 import functools
@@ -5,7 +6,6 @@ import warnings
 import numpy as np
 where = np.flatnonzero
 
-#import pandas
 from .core.utils import fill_triu_inplace, fill_tril_inplace
 
 
@@ -28,6 +28,30 @@ def deprecated(func, replacement=None):
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return func(*args, **kwargs)
     return wrapped
+
+
+def rle(x):
+    """
+    Run length encoding.
+    Based on http://stackoverflow.com/a/32681075, which is based on the R rle function.
+    
+    Input
+    -----
+    x : array-like
+    
+    Returns
+    -------
+    start positions, run lengths, run values
+    
+    """
+    x = np.asarray(x)
+    n = len(x)
+    if n == 0:
+        return np.array([], dtype=int), np.array([], dtype=int), np.array([], dtype=x.dtype)
+    
+    starts = np.r_[0, np.flatnonzero(x[1:] != x[:-1]) + 1]
+    lengths = np.diff(np.r_[starts, n])
+    return starts, lengths, x[starts]
 
 
 def to_tsv(filename, df, **kwargs):
@@ -345,3 +369,51 @@ def matshow(ax, A, **kw):
     kw.setdefault('interpolation', 'none') # For Agg, ps and pdf backends (others fall back to 'nearest')
     kw.setdefault('aspect', 'equal')
     ax.imshow(A, **kw)
+
+
+### 1D tracks ###
+
+def directionality_index(A, window=200):
+    N = A.shape[0]
+    di = np.zeros(N)
+    for i in range(0, N):
+        lo = max(0, i-window)
+        hi = min((i+window)+1, N)
+        b, a = A[i, i:hi].sum(), A[i, lo:i+1].sum()
+        e = (a + b)/2.0
+        if e:
+            di[i] = np.sign(b - a) * ( (a-e)**2 + (b-e)**2 ) / e
+    return di
+
+
+def directionality_bias(A, window=200):
+    N = A.shape[0]
+    di = np.zeros(N)
+    for i in range(0, N):
+        lo = max(0, i-window)
+        hi = min((i+window)+1, N)
+        s = A[i, lo:hi].sum()
+        if s:
+            di[i] = (A[i, i:hi].sum() - A[i, lo:i+1].sum()) / s
+    return di
+
+
+def insul(A, extent=200):
+    N = A.shape[0]
+    score = np.zeros(N)
+    for k in range(extent):
+        ri, rj = where_diagonal(A, k)
+        for i in range(0, N-k+1):
+            score[i+k] = A[ri[i:i+k], rj[i:i+k]]
+    return score
+
+
+def insul_diamond(A, extent=200):
+    N = A.shape[0]
+    score = np.zeros(N)
+    for i in range(0, N):
+        lo = max(0, i-extent)
+        hi = min(i+extent, N)
+        score[i] = A[lo:i, i:hi].sum()
+    score /= score.mean()
+    return score
