@@ -27,7 +27,8 @@ class SegModel(object):
         segments : array (k x 2)
 
         """
-        opt, pred = algo.maxsum(self.score_matrix)
+        maxsize = -1 if maxsize is None else maxsize
+        opt, pred = algo.maxsum(self.score_matrix, maxsize)
         path = algo.backtrack(opt, pred)
         if self.edgemask is not None:
             path = utils.mask_restore_path(path, self.edgemask)
@@ -113,7 +114,7 @@ class SegModel(object):
             Lb = algo.log_backward(self.score_matrix, beta, 0, self.n_bins, maxsize=maxsize)
             logZ = Lf[-1]
 
-        Ld = algo._log_domain_marginal(self.score_matrix, beta, Lf, Lb)
+        Ld = algo._log_domain_marginal(self.score_matrix, beta, Lf, Lb, maxsize=maxsize)
         Pd = np.exp(Ld - logZ)
         if self.edgemask is not None:
             Pd = utils.mask_restore(Pd, self.edgemask)
@@ -146,7 +147,7 @@ class SegModel(object):
             Lb = algo.log_backward(self.score_matrix, beta, 0, self.n_bins, maxsize=maxsize)
             logZ = Lf[-1]
 
-        Ld = algo._log_domain_marginal(self.score_matrix, beta, Lf, Lb)
+        Ld = algo._log_domain_marginal(self.score_matrix, beta, Lf, Lb, maxsize=maxsize)
         Ldd = algo._log_domain_cooccur_marginal(Ld)
         Pdd = np.exp(Ldd - logZ)
         if self.edgemask is not None:
