@@ -523,8 +523,8 @@ def _log_domain_marginal(
     cdef int i, j
     if maxsize == -1:
         maxsize = N
-    for i in range(maxsize+1):
-        for j in range(i, maxsize+1):
+    for i in range(N+1):
+        for j in range(i, min(i + maxsize, N) +1):
             Ls[i,j] = Ls[j,i] = Lf[i] + beta*S[i, j] + Lb[j]
     return Ls
 
@@ -563,7 +563,8 @@ def log_domain_marginal(
 
 
 cpdef _log_boundary_cooccur_marginal(
-        np.ndarray[np.double_t, ndim=2] Lz):
+        np.ndarray[np.double_t, ndim=2] Lz,
+        int maxsize=-1):
     """
     Parameters
     ----------
@@ -585,15 +586,18 @@ cpdef _log_boundary_cooccur_marginal(
     cdef int N = len(Lz) - 1
     cdef np.ndarray[np.double_t, ndim=2] Lbb = np.zeros((N+1,N+1))
     cdef int i, j
+    if maxsize == -1:
+        maxsize = N
     for i in range(N+1):
-        for j in range(i, N+1):
+        for j in range(i, min(i + maxsize, N) +1):
             Lbb[i,j] = Lbb[j,i] = Lz[0, i] + Lz[i, j] + Lz[j, N]
     return Lbb
 
 
 def log_boundary_cooccur_marginal(
         np.ndarray[np.double_t, ndim=2] S,
-        double beta):
+        double beta,
+        int maxsize=-1):
     """
     Log of statistical weight sums for pairs of bin edges simultaneously
     occurring as domain boundaries.
@@ -618,7 +622,7 @@ def log_boundary_cooccur_marginal(
 
     """
     cdef np.ndarray[np.double_t, ndim=2] Lz = log_zmatrix(S, beta)
-    return _log_boundary_cooccur_marginal(Lz)
+    return _log_boundary_cooccur_marginal(Lz, maxsize)
 
 
 cpdef _log_domain_cooccur_marginal(
