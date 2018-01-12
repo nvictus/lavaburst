@@ -460,7 +460,8 @@ cpdef np.ndarray[np.double_t, ndim=2] log_zmatrix(
 
 def log_boundary_marginal(
         np.ndarray[np.double_t, ndim=2] S,
-        double beta):
+        double beta,
+        int maxsize=-1):
     """
     Log of marginal domain boundary statistical weight sums.
 
@@ -479,8 +480,10 @@ def log_boundary_marginal(
 
     """
     cdef int N = len(S) - 1
-    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(S, beta, 0, N)
-    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(S, beta, 0, N)
+    if maxsize == -1:
+        maxsize = N
+    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(S, beta, 0, N, maxsize)
+    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(S, beta, 0, N, maxsize)
     return Lf + Lb
 
 
@@ -488,7 +491,8 @@ def _log_domain_marginal(
         np.ndarray[np.double_t, ndim=2] S,
         double beta,
         np.ndarray[np.double_t, ndim=1] Lf,
-        np.ndarray[np.double_t, ndim=1] Lb):
+        np.ndarray[np.double_t, ndim=1] Lb,
+        int maxsize=-1):
     """
     Parameters
     ----------
@@ -517,15 +521,18 @@ def _log_domain_marginal(
     cdef int N = len(S) - 1
     cdef np.ndarray[np.double_t, ndim=2] Ls = np.zeros((N+1, N+1))
     cdef int i, j
-    for i in range(N+1):
-        for j in range(i, N+1):
+    if maxsize == -1:
+        maxsize = N
+    for i in range(maxsize+1):
+        for j in range(i, maxsize+1):
             Ls[i,j] = Ls[j,i] = Lf[i] + beta*S[i, j] + Lb[j]
     return Ls
 
 
 def log_domain_marginal(
         np.ndarray[np.double_t, ndim=2] S,
-        double beta):
+        double beta,
+        int maxsize=-1):
     """
     Log of marginal domain statistical weight sums.
 
@@ -550,9 +557,9 @@ def log_domain_marginal(
 
     """
     cdef int N = len(S) - 1
-    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(S, beta, 0, N)
-    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(S, beta, 0, N)
-    return _log_domain_marginal(S, beta, Lf, Lb)
+    cdef np.ndarray[np.double_t, ndim=1] Lf = log_forward(S, beta, 0, N, maxsize)
+    cdef np.ndarray[np.double_t, ndim=1] Lb = log_backward(S, beta, 0, N, maxsize)
+    return _log_domain_marginal(S, beta, Lf, Lb, maxsize)
 
 
 cpdef _log_boundary_cooccur_marginal(
