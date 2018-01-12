@@ -46,3 +46,4 @@ part of the same domain, over all possible segmentations.
 Exact statistical sampling of domain segmentations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Sample individual segmentations from the probabilistic model.
