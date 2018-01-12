@@ -1,6 +1,7 @@
 from collections import defaultdict
 from scipy.signal import find_peaks_cwt
 import numpy as np
+from .utils import fill_tril_inplace
 
 
 def call_boundary_peaks(Pb):
@@ -67,7 +68,7 @@ def call_domain_peaks(Ps, thresh):
 
     Ps_thresholded = np.array(Ps)
     Ps_thresholded[Ps_thresholded < thresh] = 0.0
-    Ps_thresholded = utils.fill_tril_inplace(
+    Ps_thresholded = fill_tril_inplace(
         Ps_thresholded, k=1, value=0.0)
     peak = detect_peaks(Ps_thresholded)
     
