@@ -6,10 +6,9 @@ from .utils import fill_tril_inplace
 
 def call_boundary_peaks(Pb):
     n = len(Pb)
-    regions = []
-
     peaks = find_peaks_cwt(
-        Pb, np.array([0.5]), 
+        Pb, 
+        np.array([0.5]), 
         wavelet=None, 
         max_distances=None, 
         gap_thresh=None, 
@@ -17,15 +16,21 @@ def call_boundary_peaks(Pb):
         min_snr=1, 
         noise_perc=10)
 
+    regions = []
     for i in peaks:
         top = Pb[i]
-        x = [l for l in range(1, 5) if Pb[i-l] > 0.4*top]
-        y = [r for r in range(1, 5) if Pb[i+r] > 0.4*top]
+        x = [l for l in range(1, min(i, 5)) if Pb[i-l] > 0.4*top]
+        y = [r for r in range(1, min(n-i, 5)) if Pb[i+r] > 0.4*top]
         start = (i - x[-1]) if len(x) else i
         end = (i + y[-1]) if len(y) else i
         regions.append([start-1, end+1, top])
 
-    return map(np.array, zip(*regions))
+    if len(regions):
+        starts, ends, values = zip(*regions)
+    else:
+        starts, ends, values = [], [], []
+
+    return np.array(starts), np.array(ends), np.array(values)
 
 
 def call_domain_peaks(Ps, thresh):
