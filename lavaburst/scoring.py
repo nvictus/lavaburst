@@ -87,7 +87,7 @@ def armatus_score(A, gamma, binmask=None, **kw):
     Sdata = aggregate_by_segment(A, normalized=True)
     Sa, Mu = _scoring.armatus(Sdata, gamma)
     S = Sa - Mu
-    S = np.clip(S, np.percentile(S, 1), np.percentile(S, 99))
+    # S = np.clip(S, np.percentile(S, 1), np.percentile(S, 99))
     if binmask is not None:
         edges = np.zeros(N)
         edges[~binmask] = np.nan
