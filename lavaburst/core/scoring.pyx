@@ -44,7 +44,7 @@ cpdef armatus(np.ndarray[np.double_t, ndim=2] Sseg, double gamma):
     cdef np.ndarray[np.double_t, ndim=2] Mu = np.zeros((N+1, N+1), dtype=float)
     cdef int d, i
     for d in range(N+1):
-        for i in range(0, N-d):
+        for i in range(0, N-d+1):
             Mu[i, d+i] = Mu[d+i, i] = mu[d]
 
     return Sa,  Mu
